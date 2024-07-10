@@ -3,6 +3,7 @@
 import itertools
 import numpy as np
 import warnings
+from typing import Optional, Union, List
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -24,8 +25,12 @@ class World:
     """Core world modeling class."""
 
     def __init__(
-        self, name="world", inflation_radius=0.0, object_radius=0.0375, wall_height=2.0
-    ):
+        self,
+        name: str = "world",
+        inflation_radius: float = 0.0,
+        object_radius: float = 0.0375,
+        wall_height: float = 2.0,
+    ) -> None:
         """
         Creates a new world model instance.
 
@@ -82,7 +87,9 @@ class World:
     ############
     # Metadata #
     ############
-    def set_metadata(self, locations=None, objects=None):
+    def set_metadata(
+        self, locations: Optional[str] = None, objects: Optional[str] = None
+    ) -> None:
         """
         Sets location and object metadata from the specified files.
 
@@ -96,7 +103,7 @@ class World:
         if objects is not None:
             Object.set_metadata(objects)
 
-    def set_inflation_radius(self, inflation_radius=0.0):
+    def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """
         Sets world inflation radius.
 
@@ -112,7 +119,7 @@ class World:
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, **room_config):
+    def add_room(self, **room_config: Union[Room, dict]) -> Optional[Room]:
         r"""
         Adds a room to the world.
 
@@ -169,7 +176,7 @@ class World:
         room.add_graph_nodes()
         return room
 
-    def remove_room(self, room_name):
+    def remove_room(self, room_name: str) -> bool:
         """
         Removes a room from the world by name.
 
@@ -199,7 +206,7 @@ class World:
 
         return True
 
-    def add_hallway(self, **hallway_config):
+    def add_hallway(self, **hallway_config: Union[Hallway, dict]) -> Optional[Hallway]:
         r"""
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
@@ -259,7 +266,7 @@ class World:
         # Finally, return the Hallway object
         return hallway
 
-    def remove_hallway(self, hallway):
+    def remove_hallway(self, hallway: Hallway) -> bool:
         """
         Removes a hallway between two rooms.
 
@@ -283,7 +290,7 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def open_hallway(self, hallway):
+    def open_hallway(self, hallway: Hallway) -> bool:
         """
         Opens a hallway between two rooms.
 
@@ -311,7 +318,7 @@ class World:
             self.gui.canvas.draw_and_sleep()
         return True
 
-    def close_hallway(self, hallway):
+    def close_hallway(self, hallway: Hallway) -> bool:
         """
         Close a hallway between two rooms.
 
@@ -339,7 +346,7 @@ class World:
             self.gui.canvas.draw_and_sleep()
         return True
 
-    def lock_hallway(self, hallway):
+    def lock_hallway(self, hallway: Hallway) -> bool:
         """
         Locks a hallway between two rooms.
 
@@ -360,7 +367,7 @@ class World:
         hallway.is_locked = True
         return True
 
-    def unlock_hallway(self, hallway):
+    def unlock_hallway(self, hallway: Hallway) -> bool:
         """
         Unlocks a hallway between two rooms.
 
@@ -381,7 +388,9 @@ class World:
         hallway.is_locked = False
         return True
 
-    def add_location(self, **location_config):
+    def add_location(
+        self, **location_config: Union[Location, dict]
+    ) -> Optional[Location]:
         r"""
         Adds a location at the specified parent entity, usually a room.
 
@@ -454,7 +463,12 @@ class World:
         loc.add_graph_nodes()
         return loc
 
-    def update_location(self, loc, pose, room=None):
+    def update_location(
+        self,
+        loc: Union[Location, str],
+        pose: Pose,
+        room: Optional[Union[Room, str]] = None,
+    ) -> bool:
         """
         Updates an existing location in the world.
 
@@ -506,7 +520,7 @@ class World:
             spawn.set_pose_from_parent()
         return True
 
-    def remove_location(self, loc):
+    def remove_location(self, loc: Union[Location, str]) -> bool:
         """
         Cleanly removes a location from the world.
 
@@ -537,7 +551,7 @@ class World:
             return True
         return False
 
-    def add_object(self, **object_config):
+    def add_object(self, **object_config: Union[Object, dict]) -> Optional[Object]:
         r"""
         Adds an object to a specific location.
 
@@ -647,7 +661,12 @@ class World:
             self.gui.canvas.show_objects()
         return obj
 
-    def update_object(self, obj, loc=None, pose=None):
+    def update_object(
+        self,
+        obj: Union[Object, str],
+        loc: Optional[Union[Location, ObjectSpawn, str]] = None,
+        pose: Optional[Pose] = None,
+    ) -> bool:
         """
         Updates an existing object in the world.
 
@@ -695,7 +714,7 @@ class World:
 
         return True
 
-    def remove_object(self, obj):
+    def remove_object(self, obj: Union[Object, str]) -> bool:
         """
         Cleanly removes an object from the world.
 
@@ -718,7 +737,7 @@ class World:
             self.gui.canvas.show_objects()
         return True
 
-    def remove_all_objects(self, restart_numbering=True):
+    def remove_all_objects(self, restart_numbering: bool = True) -> Optional[bool]:
         """
         Cleanly removes all objects from the world.
 
@@ -732,7 +751,12 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
-    def add_robot(self, robot, loc=None, pose=None):
+    def add_robot(
+        self,
+        robot: Robot,
+        loc: Optional[Union[Room, Hallway, Location, ObjectSpawn, str]] = None,
+        pose: Optional[Pose] = None,
+    ) -> None:
         """
         Adds a robot to the world given either a world entity and/or pose.
 
@@ -828,7 +852,7 @@ class World:
         if self.has_ros_node:
             self.ros_node.add_robot_ros_interfaces()
 
-    def remove_robot(self, robot_name):
+    def remove_robot(self, robot_name: str) -> bool:
         """
         Removes a robot from the world.
 
@@ -855,7 +879,7 @@ class World:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
 
-    def update_bounds(self, entity, remove=False):
+    def update_bounds(self, entity: Union[Room, Hallway], remove: bool = False) -> None:
         """
         Updates the X and Y bounds of the world.
 
@@ -903,7 +927,7 @@ class World:
     ################################
     # Lookup Functionality Methods #
     ################################
-    def get_room_names(self):
+    def get_room_names(self) -> List[str]:
         """
         Gets all room names in the world.
 
@@ -912,7 +936,7 @@ class World:
         """
         return [room.name for room in self.rooms]
 
-    def get_room_by_name(self, name):
+    def get_room_by_name(self, name: str) -> Optional[Room]:
         """
         Gets a room object by its name.
 
@@ -932,7 +956,7 @@ class World:
 
         return entity
 
-    def get_hallway_names(self):
+    def get_hallway_names(self) -> List[str]:
         """
         Gets all hallway names.
 
@@ -941,7 +965,7 @@ class World:
         """
         return [hall.name for hall in self.hallways]
 
-    def get_hallway_by_name(self, name):
+    def get_hallway_by_name(self, name: str) -> Optional[Hallway]:
         """
         Gets a hallway object by its name.
 
@@ -961,7 +985,7 @@ class World:
 
         return entity
 
-    def get_hallways_from_rooms(self, room1, room2):
+    def get_hallways_from_rooms(self, room1: Room, room2: Room) -> Optional[Hallway]:
         """
         Returns a list of hallways between two rooms.
 
@@ -994,7 +1018,9 @@ class World:
                 hallways.append(hall)
         return hallways
 
-    def get_locations(self, category_list=None):
+    def get_locations(
+        self, category_list: Optional[List[str]] = None
+    ) -> List[Location]:
         """
         Gets all locations, optionally filtered by category.
 
@@ -1008,7 +1034,9 @@ class World:
         else:
             return [loc for loc in self.locations if loc.category in category_list]
 
-    def get_location_names(self, category_list=None):
+    def get_location_names(
+        self, category_list: Optional[List[str]] = None
+    ) -> List[str]:
         """
         Gets all location names, optionally filtered by category.
 
@@ -1022,7 +1050,7 @@ class World:
         else:
             return [loc.name for loc in self.locations if loc.category in category_list]
 
-    def get_location_by_name(self, name):
+    def get_location_by_name(self, name: str) -> Optional[Hallway]:
         """
         Gets a location object by its name.
 
@@ -1042,7 +1070,9 @@ class World:
 
         return entity
 
-    def get_location_from_pose(self, pose):
+    def get_location_from_pose(
+        self, pose: Pose
+    ) -> Optional[Union[Room, ObjectSpawn, Hallway]]:
         """
         Gets the name of a location given a pose.
 
@@ -1063,7 +1093,9 @@ class World:
                     return spawn
         return None
 
-    def get_object_spawns(self, category_list=None):
+    def get_object_spawns(
+        self, category_list: Optional[List[str]] = None
+    ) -> List[ObjectSpawn]:
         """
         Gets all object spawn locations, optionally filtered by category.
 
@@ -1078,7 +1110,9 @@ class World:
             if not category_list or loc.category in category_list:
                 spawn_list.extend(loc.children)
 
-    def get_object_spawn_names(self, category_list=None):
+    def get_object_spawn_names(
+        self, category_list: Optional[List[str]] = None
+    ) -> List[str]:
         """
         Gets all object spawn location names, optionally filtered by category.
 
@@ -1093,7 +1127,7 @@ class World:
             if not category_list or loc.category in category_list:
                 spawn_name_list.extend([spawn.name for spawn in loc.children])
 
-    def get_objects(self, category_list=None):
+    def get_objects(self, category_list: Optional[str] = None) -> List[Object]:
         """
         Gets all objects in the world, optionally filtered by category.
 
@@ -1107,7 +1141,7 @@ class World:
         else:
             return [o for o in self.objects if o.category in category_list]
 
-    def get_object_names(self, category_list=None):
+    def get_object_names(self, category_list: Optional[List[str]] = None) -> List[str]:
         """
         Gets all object names in the world, optionally filtered by category.
 
@@ -1121,7 +1155,7 @@ class World:
         else:
             return [o.name for o in self.objects if o.category in category_list]
 
-    def get_object_by_name(self, name):
+    def get_object_by_name(self, name: str) -> Optional[Object]:
         """
         Gets an object by its name.
 
@@ -1140,7 +1174,7 @@ class World:
 
         return entity
 
-    def get_robot_names(self):
+    def get_robot_names(self) -> List[str]:
         """
         Gets all robot names in the world.
 
@@ -1149,7 +1183,7 @@ class World:
         """
         return [robot.name for robot in self.robots]
 
-    def get_robot_by_name(self, name):
+    def get_robot_by_name(self, name: str) -> Optional[Robot]:
         """
         Gets a robot by its name.
 
@@ -1168,7 +1202,9 @@ class World:
 
         return entity
 
-    def get_entity_by_name(self, name):
+    def get_entity_by_name(
+        self, name: str
+    ) -> Optional[Union[Room, Location, Object, ObjectSpawn, Hallway]]:
         """
         Gets any world entity by its name.
 
@@ -1185,7 +1221,13 @@ class World:
     # Occupancy utilities #
     #######################
 
-    def is_connectable(self, start, goal, step_dist=0.01, max_dist=None):
+    def is_connectable(
+        self,
+        start: Pose,
+        goal: Pose,
+        step_dist: float = 0.01,
+        max_dist: Optional[float] = None,
+    ) -> bool:
         """
         Checks connectivity between two poses `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter
@@ -1231,7 +1273,7 @@ class World:
         # connect the points.
         return True
 
-    def check_occupancy(self, pose):
+    def check_occupancy(self, pose: Pose) -> bool:
         """
         Check if a pose in the world is occupied.
         :param pose: Pose for checking occupancy.
@@ -1247,7 +1289,7 @@ class World:
         # If we made it through, the pose is occupied.
         return True
 
-    def collides_with_robots(self, pose, robot=None):
+    def collides_with_robots(self, pose: Pose, robot: Optional[Robot] = None) -> bool:
         """
         Checks if a pose collides with robots in the world.
         Currently assumes that robots are circles, so we can do simple checks.
@@ -1269,7 +1311,9 @@ class World:
                 return True
         return False
 
-    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
+    def sample_free_robot_pose_uniform(
+        self, robot: Optional[Robot] = None, ignore_robots: bool = True
+    ) -> Optional[Pose]:
         """
         Sample an unoccupied robot pose in the world.
         This is done using uniform sampling within the world X-Y bounds and rejecting

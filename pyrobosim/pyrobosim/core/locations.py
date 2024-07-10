@@ -1,5 +1,6 @@
 """ Representations for locations and their corresponding object spawns. """
 
+from typing import Tuple, List, Union, Optional
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
@@ -11,19 +12,20 @@ from ..utils.polygon import (
     transform_polygon,
 )
 from ..utils.search_graph import Node
+from .room import Room
 
 
 class Location:
     """Representation of a location in the world."""
 
     # Default class attributes
-    height = 1.0
+    height: float = 1.0
     """ Vertical height of location. """
-    viz_color = (0, 0, 0)
+    viz_color: Tuple[float, float, float] = (0, 0, 0)
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def set_metadata(cls, filename):
+    def set_metadata(cls, filename: str) -> None:
         """
         Assign a metadata file to the :class:`pyrobosim.core.locations.Location` class.
 
@@ -32,7 +34,14 @@ class Location:
         """
         cls.metadata = EntityMetadata(filename)
 
-    def __init__(self, name=None, category=None, pose=None, parent=None, color=None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        category: Optional[str] = None,
+        pose: Optional[Pose] = None,
+        parent: Optional[Room] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+    ) -> None:
         """
         Creates a location instance.
 
@@ -74,7 +83,7 @@ class Location:
         self.create_polygons()
         self.create_spawn_locations()
 
-    def get_room_name(self):
+    def get_room_name(self) -> Optional[str]:
         """
         Returns the name of the room containing the location.
 
@@ -86,7 +95,7 @@ class Location:
         else:
             return self.parent.name
 
-    def is_inside(self, pose):
+    def is_inside(self, pose: Union[Pose, Tuple[float, float]]) -> bool:
         """
         Checks if a pose is inside the location polygon.
 
@@ -101,7 +110,7 @@ class Location:
             x, y = pose[0], pose[1]
         return intersects_xy(self.polygon, x, y)
 
-    def set_pose(self, pose):
+    def set_pose(self, pose: Pose) -> None:
         """
         Sets the pose of a location, accounting for its navigation poses and object spawns.
         Use this instead of directly assigning the ``pose`` attribute.
@@ -130,7 +139,7 @@ class Location:
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
 
-    def create_polygons(self, inflation_radius=0.0):
+    def create_polygons(self, inflation_radius: Optional[float] = 0.0) -> None:
         """
         Creates collision and visualization polygons for the location.
 
@@ -145,7 +154,7 @@ class Location:
         self.update_collision_polygon(inflation_radius=inflation_radius)
         self.update_visualization_polygon()
 
-    def update_collision_polygon(self, inflation_radius=0.0):
+    def update_collision_polygon(self, inflation_radius: Optional[float] = 0.0) -> None:
         """
         Updates the collision polygon using the specified inflation radius.
 
@@ -154,7 +163,7 @@ class Location:
         """
         self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the location."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
@@ -166,7 +175,7 @@ class Location:
             zorder=2,
         )
 
-    def create_spawn_locations(self):
+    def create_spawn_locations(self) -> None:
         """Creates the object spawn locations at this location."""
         self.children = []
         if "locations" in self.metadata:
@@ -178,12 +187,12 @@ class Location:
                 os = ObjectSpawn(name, loc_data, self)
                 self.children.append(os)
 
-    def add_graph_nodes(self):
+    def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
         for spawn in self.children:
             spawn.add_graph_nodes()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Location: {self.name}"
 
@@ -195,7 +204,9 @@ class Location:
 class ObjectSpawn:
     """Representation of an object spawn in the world."""
 
-    def __init__(self, name, metadata, parent=None):
+    def __init__(
+        self, name: str, metadata: dict, parent: Optional[Location] = None
+    ) -> None:
         """
         Creates an object spawn instance.
 
@@ -220,7 +231,7 @@ class ObjectSpawn:
 
         self.set_pose_from_parent()
 
-    def set_pose_from_parent(self):
+    def set_pose_from_parent(self) -> None:
         """Updates the object spawn's pose from its parent's pose."""
         # Get the footprint and height data
         if "footprint" not in self.metadata:
@@ -263,7 +274,7 @@ class ObjectSpawn:
         else:
             self.nav_poses = self.parent.nav_poses
 
-    def get_room_name(self):
+    def get_room_name(self) -> str:
         """
         Returns the name of the room containing the object spawn.
 
@@ -272,7 +283,7 @@ class ObjectSpawn:
         """
         return self.parent.get_room_name()
 
-    def is_inside(self, pose):
+    def is_inside(self, pose: Union[Pose, Tuple[float, float]]) -> bool:
         """
         Checks if a pose is inside the object spawn polygon.
 
@@ -287,7 +298,7 @@ class ObjectSpawn:
             x, y = pose[0], pose[1]
         return intersects_xy(self.polygon, x, y)
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the object spawn."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
@@ -299,14 +310,14 @@ class ObjectSpawn:
             zorder=2,
         )
 
-    def add_graph_nodes(self):
+    def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Object spawn: {self.name}"
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Prints string with details."""
         print(f"Object spawn: {self.name} in {self.parent.name}\n\t{self.pose}")

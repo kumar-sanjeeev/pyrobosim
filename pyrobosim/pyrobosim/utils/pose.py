@@ -5,12 +5,22 @@ Pose representation utilities.
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
+from typing import Optional, List, Tuple
 
 
 class Pose:
     """Represents a 3D pose."""
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0, q=None):
+    def __init__(
+        self,
+        x: float = 0.0,
+        y: float = 0.0,
+        z: float = 0.0,
+        roll: float = 0.0,
+        pitch: float = 0.0,
+        yaw: float = 0.0,
+        q: Optional[List[float]] = None,
+    ) -> None:
         """
         Creates a new Pose object.
 

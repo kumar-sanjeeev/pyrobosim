@@ -5,6 +5,7 @@ Robot dynamics utilities.
 import copy
 import numpy as np
 import warnings
+from typing import Optional
 
 from ..utils.pose import Pose
 
@@ -15,13 +16,13 @@ class RobotDynamics2D:
     def __init__(
         self,
         robot=None,
-        init_pose=Pose(),
-        init_vel=np.array([0.0, 0.0, 0.0]),
-        max_linear_velocity=np.inf,
-        max_angular_velocity=np.inf,
-        max_linear_acceleration=np.inf,
-        max_angular_acceleration=np.inf,
-    ):
+        init_pose: Pose = Pose(),
+        init_vel: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        max_linear_velocity: float = np.inf,
+        max_angular_velocity: float = np.inf,
+        max_linear_acceleration: float = np.inf,
+        max_angular_acceleration: float = np.inf,
+    ) -> None:
         """
         Creates an instance of a 2D robot dynamics object.
 
@@ -55,7 +56,13 @@ class RobotDynamics2D:
             [max_linear_acceleration, max_linear_acceleration, max_angular_acceleration]
         )
 
-    def step(self, cmd_vel, dt, world=None, check_collisions=False):
+    def step(
+        self,
+        cmd_vel: np.ndarray,
+        dt: float,
+        world=None,
+        check_collisions: bool = False,
+    ) -> None:
         """
         Perform a single dynamics step.
 
@@ -100,7 +107,7 @@ class RobotDynamics2D:
         self.collision = False
         self.pose = target_pose
 
-    def enforce_dynamics_limits(self, cmd_vel, dt):
+    def enforce_dynamics_limits(self, cmd_vel: np.ndarray, dt: float) -> np.ndarray:
         """
         Enforces velocity and acceleration limits by saturating a velocity command.
 
@@ -123,7 +130,11 @@ class RobotDynamics2D:
 
         return cmd_vel
 
-    def reset(self, pose=None, velocity=np.array([0.0, 0.0, 0.0])):
+    def reset(
+        self,
+        pose: Optional[Pose] = None,
+        velocity: np.ndarray = np.array([0.0, 0.0, 0.0]),
+    ) -> None:
         """
         Reset all the dynamics of the robot to provided values.
 

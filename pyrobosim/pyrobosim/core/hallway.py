@@ -1,5 +1,6 @@
 """ Hallway representation for world modeling. """
 
+from typing import List, Tuple
 import numpy as np
 from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
@@ -8,6 +9,7 @@ from shapely.plotting import patch_from_polygon
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
 from ..utils.search_graph import Node
+from .room import Room
 
 
 class Hallway:
@@ -15,18 +17,18 @@ class Hallway:
 
     def __init__(
         self,
-        room_start=None,
-        room_end=None,
-        width=0.0,
-        conn_method="auto",
-        offset=0,
-        conn_angle=0,
-        conn_points=[],
-        color=[0.4, 0.4, 0.4],
-        wall_width=0.2,
-        is_open=True,
-        is_locked=False,
-    ):
+        room_start: Room,
+        room_end: Room,
+        width: float = 0.0,
+        conn_method: str = "auto",
+        offset: float = 0,
+        conn_angle: float = 0,
+        conn_points: List[Tuple[float, float]] = [],
+        color: Tuple[float, float, float] = [0.4, 0.4, 0.4],
+        wall_width: float = 0.2,
+        is_open: bool = True,
+        is_locked: bool = False,
+    ) -> None:
         """
         Creates a Hallway instance between two rooms.
 
@@ -111,7 +113,7 @@ class Hallway:
         self.update_collision_polygons()
         self.update_visualization_polygon()
 
-    def update_collision_polygons(self, inflation_radius=0.0):
+    def update_collision_polygons(self, inflation_radius: float = 0.0) -> None:
         """
         Updates the collision polygons using the specified inflation radius.
 
@@ -150,7 +152,7 @@ class Hallway:
             self.room_end.external_collision_polygon
         )
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the hallway walls."""
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
@@ -165,7 +167,7 @@ class Hallway:
             zorder=2,
         )
 
-    def get_closed_patch(self):
+    def get_closed_patch(self) -> None:
         """
         Returns a patch of the hallway polygon to display when it is closed.
 
@@ -181,7 +183,7 @@ class Hallway:
             zorder=2,
         )
 
-    def get_collision_patch(self):
+    def get_collision_patch(self) -> None:
         """
         Returns a patch of the collision polygon for debug visualization.
 
@@ -197,7 +199,7 @@ class Hallway:
             zorder=2,
         )
 
-    def is_collision_free(self, pose):
+    def is_collision_free(self, pose: Pose) -> bool:
         """
         Checks whether a pose in the hallway is collision-free.
 
@@ -216,7 +218,7 @@ class Hallway:
             is_free = is_free and not intersects_xy(self.closed_polygon, x, y)
         return is_free
 
-    def add_graph_nodes(self):
+    def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
         intersect_line = LineString(self.points)
         intersect_line = intersect_line.difference(
@@ -249,7 +251,7 @@ class Hallway:
         )
         self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Hallway: {self.name}"
 

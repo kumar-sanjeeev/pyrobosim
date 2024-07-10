@@ -3,10 +3,16 @@
 import os
 import shutil
 import itertools
+from typing import Optional, Union, Literal
 from shapely.geometry import LineString, Polygon, MultiPolygon
 from shapely.ops import split
 
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
+from .world import World
+from .room import Room
+from .hallway import Hallway
+from .locations import Location
+from .objects import Object
 
 
 FOUR_SPACES = " " * 4
@@ -17,7 +23,7 @@ TWELVE_SPACES = " " * 8
 class WorldGazeboExporter:
     """Exports world models to Gazebo."""
 
-    def __init__(self, world):
+    def __init__(self, world: World) -> None:
         """
         Creates a new Gazebo exporter from a world.
 
@@ -35,7 +41,7 @@ class WorldGazeboExporter:
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(self, classic=False, out_folder=None):
+    def export(self, classic: bool = False, out_folder: Optional[str] = None) -> None:
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -96,7 +102,7 @@ class WorldGazeboExporter:
         print(f"    {command} {world_file_name}\n")
         return self.out_folder
 
-    def create_walls_for_export(self, walls_name="walls"):
+    def create_walls_for_export(self, walls_name: str = "walls") -> None:
         """
         Convert all room / hallway polygons to Gazebo representations.
 
@@ -136,7 +142,7 @@ class WorldGazeboExporter:
         self.model_include_text += EIGHT_SPACES + f"<uri>model://{walls_name}</uri>\n"
         self.model_include_text += FOUR_SPACES + "</include>\n"
 
-    def create_locations_and_objects_for_export(self):
+    def create_locations_and_objects_for_export(self) -> None:
         """
         Export locations and objects to Gazebo representations.
 
@@ -205,7 +211,12 @@ class WorldGazeboExporter:
             self.model_include_text += EIGHT_SPACES + f"<pose>{pose_str}</pose>\n"
             self.model_include_text += FOUR_SPACES + "</include>\n"
 
-    def create_sdf_link_text(self, template_text, entity, entity_type):
+    def create_sdf_link_text(
+        self,
+        template_text: str,
+        entity: Union[Room, Hallway, Location, Object],
+        entity_type: Literal["walls", "object"],
+    ) -> str:
         """
         Creates SDF link text from a world entity.
 
@@ -272,7 +283,7 @@ class WorldGazeboExporter:
 
         return full_text
 
-    def read_template_file(self, filename):
+    def read_template_file(self, filename: str) -> str:
         """
         Simple wrapper utility to read a file from the template folder.
 

@@ -4,9 +4,11 @@ import numpy as np
 import os
 import warnings
 import yaml
+from typing import Optional
 
 from .robot import Robot
 from .world import World
+from ..manipulation.grasping import GraspGenerator
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
 from ..navigation import (
@@ -19,7 +21,7 @@ from ..navigation import (
 class WorldYamlLoader:
     """Creates world models from YAML files."""
 
-    def from_yaml(self, filename):
+    def from_yaml(self, filename: str) -> World:
         """
         Load a world from a YAML description.
 
@@ -41,7 +43,7 @@ class WorldYamlLoader:
         self.add_robots()
         return self.world
 
-    def create_world(self):
+    def create_world(self) -> None:
         """Creates an initial world with the specified global parameters."""
         if "params" in self.data:
             params = self.data["params"]
@@ -68,7 +70,7 @@ class WorldYamlLoader:
                 obj_data = None
             self.world.set_metadata(locations=loc_data, objects=obj_data)
 
-    def add_rooms(self):
+    def add_rooms(self) -> None:
         """Add rooms to the world."""
         for room_data in self.data.get("rooms", []):
             # TODO: Find a way to parse poses as YAML.
@@ -79,12 +81,12 @@ class WorldYamlLoader:
 
             self.world.add_room(**room_data)
 
-    def add_hallways(self):
+    def add_hallways(self) -> None:
         """Add hallways connecting rooms to the world."""
         for hall_data in self.data.get("hallways", []):
             self.world.add_hallway(**hall_data)
 
-    def add_locations(self):
+    def add_locations(self) -> None:
         """Add locations for object spawning to the world."""
         for loc_data in self.data.get("locations", []):
             # TODO: Find a way to parse poses as YAML.
@@ -92,7 +94,7 @@ class WorldYamlLoader:
 
             self.world.add_location(**loc_data)
 
-    def add_objects(self):
+    def add_objects(self) -> None:
         """Add objects to the world."""
         if "objects" not in self.data:
             return
@@ -103,7 +105,7 @@ class WorldYamlLoader:
                 obj_data["pose"] = Pose.from_list(obj_data["pose"])
             self.world.add_object(**obj_data)
 
-    def add_robots(self):
+    def add_robots(self) -> None:
         """Add robots to the world."""
         if "robots" not in self.data:
             return
@@ -140,7 +142,7 @@ class WorldYamlLoader:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
 
-    def get_local_path_planner(self, robot_data):
+    def get_local_path_planner(self, robot_data: dict) -> Optional[PathPlanner]:
         """Gets local planner path planner to a robot."""
         if "path_planner" not in robot_data:
             return None
@@ -166,7 +168,7 @@ class WorldYamlLoader:
 
         return path_planner
 
-    def get_path_executor(self, robot_data):
+    def get_path_executor(self, robot_data: dict) -> Optional[ConstantVelocityExecutor]:
         """Gets a path executor to add to a robot."""
         if "path_executor" not in robot_data:
             return ConstantVelocityExecutor()
@@ -183,7 +185,7 @@ class WorldYamlLoader:
             warnings.warn(f"Invalid path executor type specified: {path_executor_type}")
             return None
 
-    def get_grasp_generator(self, robot_data):
+    def get_grasp_generator(self, robot_data: dict) -> Optional[GraspGenerator]:
         """Gets a grasp generator to add to a robot."""
         from pyrobosim.manipulation.grasping import (
             GraspGenerator,

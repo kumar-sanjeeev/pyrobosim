@@ -2,6 +2,7 @@
 Room representation for world modeling.
 """
 
+from typing import Optional, Union, List, Tuple
 from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
@@ -16,13 +17,13 @@ class Room:
 
     def __init__(
         self,
-        name=None,
-        footprint=[],
-        color=[0.4, 0.4, 0.4],
-        wall_width=0.2,
-        nav_poses=None,
-        height=0.0,
-    ):
+        name: Optional[str] = None,
+        footprint: Union[Polygon, List[Pose]] = [],
+        color: Tuple[float, float, float] = [0.4, 0.4, 0.4],
+        wall_width: float = 0.2,
+        nav_poses: Optional[List[Pose]] = None,
+        height: float = 0.0,
+    ) -> None:
         """
         Creates a Room instance.
 
@@ -67,7 +68,7 @@ class Room:
         else:
             self.nav_poses = [Pose.from_list(self.centroid)]
 
-    def update_collision_polygons(self, inflation_radius=0):
+    def update_collision_polygons(self, inflation_radius: float = 0) -> None:
         """
         Updates the collision polygons using the specified inflation radius.
 
@@ -88,7 +89,7 @@ class Room:
         # Inflate the room polygon with the wall width
         self.external_collision_polygon = inflate_polygon(self.polygon, self.wall_width)
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates visualization polygon of the room walls."""
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
@@ -103,7 +104,7 @@ class Room:
             zorder=2,
         )
 
-    def get_collision_patch(self):
+    def get_collision_patch(self) -> None:
         """
         Returns a patch of the collision polygon for debug visualization.
 
@@ -119,7 +120,7 @@ class Room:
             zorder=2,
         )
 
-    def is_collision_free(self, pose):
+    def is_collision_free(self, pose: Pose) -> bool:
         """
         Checks whether a pose in the room is collision-free.
 
@@ -134,10 +135,10 @@ class Room:
             x, y = pose[0], pose[1]
         return intersects_xy(self.internal_collision_polygon, x, y)
 
-    def add_graph_nodes(self):
+    def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Room: {self.name}"

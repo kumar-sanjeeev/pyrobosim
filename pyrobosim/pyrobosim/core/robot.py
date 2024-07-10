@@ -4,15 +4,20 @@ import time
 import threading
 import numpy as np
 import warnings
+from typing import Optional, Tuple, Union, List
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
-from ..manipulation.grasping import Grasp
+from ..manipulation.grasping import Grasp, GraspGenerator
+from ..navigation.path_planner import PathPlanner
+from ..navigation.execution import ConstantVelocityExecutor
+from ..planning.actions import TaskAction, TaskPlan
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
+from ..utils.motion import Path
 
 
 class Robot:
@@ -20,20 +25,20 @@ class Robot:
 
     def __init__(
         self,
-        name="robot",
-        pose=Pose(),
-        radius=0.0,
-        height=0.0,
-        color=(0.8, 0.0, 0.8),
-        max_linear_velocity=np.inf,
-        max_angular_velocity=np.inf,
-        max_linear_acceleration=np.inf,
-        max_angular_acceleration=np.inf,
-        path_planner=None,
-        path_executor=None,
-        grasp_generator=None,
-        partial_observability=False,
-    ):
+        name: str = "robot",
+        pose: Pose = Pose(),
+        radius: float = 0.0,
+        height: float = 0.0,
+        color: Union[Tuple[float, float, float], str] = (0.8, 0.0, 0.8),
+        max_linear_velocity: float = np.inf,
+        max_angular_velocity: float = np.inf,
+        max_linear_acceleration: float = np.inf,
+        max_angular_acceleration: float = np.inf,
+        path_planner: Optional[PathPlanner] = None,
+        path_executor: Optional[ConstantVelocityExecutor] = None,
+        grasp_generator: Optional[GraspGenerator] = None,
+        partial_observability: bool = False,
+    ) -> None:
         """
         Creates a robot instance.
 
@@ -108,7 +113,7 @@ class Robot:
         self.known_objects = set()
         self.last_detected_objects = []
 
-    def get_pose(self):
+    def get_pose(self) -> Pose:
         """
         Gets the robot pose.
 
@@ -117,7 +122,7 @@ class Robot:
         """
         return self.dynamics.pose
 
-    def set_pose(self, pose):
+    def set_pose(self, pose: Pose) -> None:
         """
         Sets the robot pose.
 
@@ -126,7 +131,7 @@ class Robot:
         """
         self.dynamics.pose = pose
 
-    def set_path_planner(self, path_planner):
+    def set_path_planner(self, path_planner: PathPlanner) -> None:
         """
         Sets a path planner for navigation.
 
@@ -136,7 +141,9 @@ class Robot:
         """
         self.path_planner = path_planner
 
-    def plan_path(self, start=None, goal=None):
+    def plan_path(
+        self, start: Optional[Pose] = None, goal: Optional[Pose] = None
+    ) -> Optional[Path]:
         """
         Plans a path to a goal position.
 
@@ -153,7 +160,7 @@ class Robot:
             return None
         return self.path_planner.plan(start, goal)
 
-    def set_path_executor(self, path_executor):
+    def set_path_executor(self, path_executor: ConstantVelocityExecutor) -> None:
         """
         Sets a path executor for navigation.
 
@@ -166,7 +173,7 @@ class Robot:
             return
         path_executor.robot = self
 
-    def is_moving(self):
+    def is_moving(self) -> bool:
         """
         Checks whether the robot is moving, either due to a navigation action or velocity commands.
 
@@ -175,7 +182,7 @@ class Robot:
         """
         return self.executing_nav or np.count_nonzero(self.dynamics.velocity) > 0
 
-    def is_in_collision(self):
+    def is_in_collision(self) -> bool:
         """
         Checks whether the last step of dynamics put the robot in collision.
 
@@ -184,7 +191,7 @@ class Robot:
         """
         return self.dynamics.collision
 
-    def at_object_spawn(self):
+    def at_object_spawn(self) -> bool:
         """
         Checks whether a robot is at an object spawn.
 
@@ -193,7 +200,7 @@ class Robot:
         """
         return isinstance(self.location, ObjectSpawn)
 
-    def get_known_objects(self):
+    def get_known_objects(self) -> List[Object]:
         """
         Returns a list of objects known by the robot.
 
@@ -208,7 +215,7 @@ class Robot:
 
         return self.world.objects
 
-    def at_openable_location(self):
+    def at_openable_location(self) -> bool:
         """
         Checks whether the robot is at an openable location.
 
@@ -219,12 +226,12 @@ class Robot:
 
     def follow_path(
         self,
-        path,
+        path: Path,
         target_location=None,
-        realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
-    ):
+        realtime_factor: float = 1.0,
+        use_thread: bool = True,
+        blocking: bool = False,
+    ) -> bool:
         """
         Follows a specified path using the attached path executor.
 
@@ -271,7 +278,7 @@ class Robot:
             self.location = target_location
         return success
 
-    def _attach_object(self, obj):
+    def _attach_object(self, obj: Object):
         """
         Helper function to attach an object in the world to the robot.
         Be careful calling this function directly as it does not do any validation.
@@ -285,7 +292,9 @@ class Robot:
         obj.parent = self
         obj.set_pose(self.get_pose())
 
-    def pick_object(self, obj_query, grasp_pose=None):
+    def pick_object(
+        self, obj_query: Union[str, Object], grasp_pose: Optional[Pose] = None
+    ) -> bool:
         """
         Picks up an object in the world given an object and/or location query.
 
@@ -367,7 +376,7 @@ class Robot:
         self._attach_object(obj)
         return True
 
-    def place_object(self, pose=None):
+    def place_object(self, pose: Optional[Pose] = None) -> bool:
         """
         Places an object in a target location and (optionally) pose.
 
@@ -430,7 +439,7 @@ class Robot:
             self.manipulated_object = None
             return True
 
-    def detect_objects(self, target_object=None):
+    def detect_objects(self, target_object: Optional[str] = None) -> bool:
         """
         Detects all objects at the robot's current location.
 
@@ -464,7 +473,7 @@ class Robot:
             ]
             return len(self.last_detected_objects) > 0
 
-    def open_location(self):
+    def open_location(self) -> bool:
         """
         Opens the robot's current location, if available.
 
@@ -489,7 +498,7 @@ class Robot:
         # This should not happen
         return False
 
-    def close_location(self):
+    def close_location(self) -> bool:
         """
         Closes the robot's current location, if available.
 
@@ -514,7 +523,7 @@ class Robot:
         # This should not happen
         return False
 
-    def execute_action(self, action, blocking=False):
+    def execute_action(self, action: TaskAction, blocking: bool = False) -> bool:
         """
         Executes an action, specified as a
         :class:`pyrobosim.planning.actions.TaskAction` object.
@@ -607,7 +616,7 @@ class Robot:
             self.executing_action = False
         return success
 
-    def execute_plan(self, plan, delay=0.5):
+    def execute_plan(self, plan: TaskPlan, delay: float = 0.5) -> Tuple[bool, int]:
         """
         Executes a task plan, specified as a
         :class:`pyrobosim.planning.actions.TaskPlan` object.
@@ -652,11 +661,11 @@ class Robot:
         self.current_plan = None
         return success, num_completed
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Robot: {self.name}"
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Prints string with details."""
         details_str = f"Robot: {self.name}, ID={self.id}"
         details_str += f"\n\t{self.get_pose()}"

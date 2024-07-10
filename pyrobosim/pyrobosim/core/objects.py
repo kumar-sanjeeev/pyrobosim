@@ -1,5 +1,6 @@
 """ Representations for objects that exist in the world. """
 
+from typing import Optional, Tuple
 import numpy as np
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
@@ -12,19 +13,20 @@ from ..utils.polygon import (
     polygon_and_height_from_footprint,
     transform_polygon,
 )
+from .locations import ObjectSpawn
 
 
 class Object:
     """Represents an object in the world."""
 
     # Default class attributes
-    height = 0.1
+    height: float = 0.1
     """ Vertical height of object. """
-    viz_color = (0, 0, 1)
+    viz_color: Tuple[float, float, float] = (0, 0, 1)
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def set_metadata(cls, filename):
+    def set_metadata(cls, filename: str) -> None:
         """
         Assign a metadata file to the :class:`pyrobosim.core.objects.Object` class.
 
@@ -35,13 +37,13 @@ class Object:
 
     def __init__(
         self,
-        name=None,
-        category=None,
-        parent=None,
-        pose=None,
-        inflation_radius=0.0,
-        color=None,
-    ):
+        name: Optional[str] = None,
+        category: Optional[str] = None,
+        parent: Optional[ObjectSpawn] = None,
+        pose: Optional[Pose] = None,
+        inflation_radius: float = 0.0,
+        color: Optional[Tuple[float, float, float]] = None,
+    ) -> None:
         """
         Creates an object instance.
 
@@ -83,7 +85,7 @@ class Object:
         self.create_polygons()
         self.create_grasp_cuboid()
 
-    def set_pose(self, pose):
+    def set_pose(self, pose: Pose) -> None:
         """
         Sets the pose of an object, accounting for any height offsets in the target location,
         and update the corresponding object polygons.
@@ -96,7 +98,7 @@ class Object:
         if self.pose is not None and self.parent is not None:
             self.pose.z += self.parent.height
 
-    def get_room_name(self):
+    def get_room_name(self) -> str:
         """
         Returns the name of the room containing the object.
 
@@ -105,7 +107,7 @@ class Object:
         """
         return self.parent.get_room_name()
 
-    def create_polygons(self, inflation_radius=None):
+    def create_polygons(self, inflation_radius: Optional[float] = None) -> None:
         """
         Creates collision and visualization polygons for the object.
         If no inflation radius is specified, uses the inflation radius attribute
@@ -124,7 +126,9 @@ class Object:
         self.update_collision_polygon(inflation_radius)
         self.update_visualization_polygon()
 
-    def update_collision_polygon(self, inflation_radius=None):
+    def update_collision_polygon(
+        self, inflation_radius: Optional[float] = None
+    ) -> None:
         """
         Updates the collision polygon using the specified inflation radius.
         If no inflation radius is specified, uses the inflation radius attribute
@@ -140,7 +144,7 @@ class Object:
         self.raw_collision_polygon = inflate_polygon(self.raw_polygon, radius)
         self.collision_polygon = inflate_polygon(self.polygon, radius)
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the object."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
@@ -152,7 +156,7 @@ class Object:
             zorder=3,
         )
 
-    def get_footprint(self):
+    def get_footprint(self) -> np.ndarray:
         """
         Returns the object footprint coordinates.
 
@@ -161,7 +165,7 @@ class Object:
         """
         return np.array(list(self.raw_polygon.exterior.coords))
 
-    def create_grasp_cuboid(self):
+    def create_grasp_cuboid(self) -> None:
         """Fits a grasp cuboid from the object footprint and height."""
         # Fit a cuboid to the irregular object footprint
         footprint = self.get_footprint()
@@ -173,7 +177,7 @@ class Object:
         self.cuboid_pose = rect_pose
         self.cuboid_dims = [rect_dims[0], rect_dims[1], self.height]
 
-    def get_grasp_cuboid_pose(self):
+    def get_grasp_cuboid_pose(self) -> Pose:
         """
         Gets the cuboid pose with respect to the reference world frame.
         This is done by multiplying the object pose and the grasp cuboid relative pose.
@@ -188,10 +192,10 @@ class Object:
             )
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Object: {self.name}"
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Prints string with details."""
         print(f"Object: {self.name} in {self.parent.name}\n\t{self.pose}")
