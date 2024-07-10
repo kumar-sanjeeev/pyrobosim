@@ -14,6 +14,7 @@ echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 
 # Install all the Python packages required
 # Note that these overlay over whatever ROS 2 already contains
+echo -e "Activated the Python virtual environment ${VIRTUALENV_FOLDER}\n"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
