@@ -3,9 +3,10 @@ Room representation for world modeling.
 """
 
 from typing import Optional, Union, List, Tuple
-from shapely import intersects_xy
-from shapely.geometry import Polygon
-from shapely.plotting import patch_from_polygon
+import matplotlib
+from shapely import intersects_xy  # type: ignore
+from shapely.geometry import Polygon  # type: ignore
+from shapely.plotting import patch_from_polygon  # type: ignore
 
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
@@ -19,7 +20,7 @@ class Room:
         self,
         name: Optional[str] = None,
         footprint: Union[Polygon, List[Pose]] = [],
-        color: Tuple[float, float, float] = [0.4, 0.4, 0.4],
+        color: List[float] = [0.4, 0.4, 0.4],
         wall_width: float = 0.2,
         nav_poses: Optional[List[Pose]] = None,
         height: float = 0.0,
@@ -45,9 +46,9 @@ class Room:
         self.viz_color = color
 
         # Entities associated with the room
-        self.hallways = []
-        self.locations = []
-        self.graph_nodes = []
+        self.hallways: List = []
+        self.locations: List = []
+        self.graph_nodes: List = []
 
         # Create the room polygon
         self.height = height
@@ -104,7 +105,7 @@ class Room:
             zorder=2,
         )
 
-    def get_collision_patch(self) -> None:
+    def get_collision_patch(self) -> matplotlib.patches.PathPatch:
         """
         Returns a patch of the collision polygon for debug visualization.
 
