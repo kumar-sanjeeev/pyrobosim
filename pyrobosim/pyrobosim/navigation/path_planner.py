@@ -1,10 +1,15 @@
 """ Implementation of the generic path planner. """
 
 import warnings
+from typing import Optional
+import matplotlib.axes
+
 from pyrobosim.navigation.a_star import AstarPlanner
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.navigation.world_graph import WorldGraphPlanner
+from ..utils.pose import Pose
+from ..utils.motion import Path
 
 
 class PathPlanner:
@@ -12,7 +17,7 @@ class PathPlanner:
     Creates a path planner.
     """
 
-    def __init__(self, planner_type, **planner_config):
+    def __init__(self, planner_type: str, **planner_config: dict) -> None:
         """
         Creates a PathPlanner instance of given type and configuration
 
@@ -45,7 +50,7 @@ class PathPlanner:
         self.planner_config = planner_config
         self.planner = self.planners[self.planner_type](**self.planner_config)
 
-    def plan(self, start, goal):
+    def plan(self, start: Pose, goal: Pose) -> Path:
         """
         Plans a path from start to goal.
 
@@ -62,7 +67,12 @@ class PathPlanner:
         self.latest_path = self.planner.plan(start, goal)
         return self.latest_path
 
-    def plot(self, axes, path=None, path_color="m"):
+    def plot(
+        self,
+        axes: matplotlib.axes.Axes,
+        path: Optional[Path] = None,
+        path_color: str = "m",
+    ) -> None:
         """
         Plots the planned path on a specified set of axes.
 
@@ -79,12 +89,12 @@ class PathPlanner:
 
         return self.planner.plot(axes, path=path, path_color=path_color)
 
-    def show(self):
+    def show(self) -> None:
         """Displays the planned path on the GUI."""
 
         self.planner.show()
 
-    def info(self):
+    def info(self) -> None:
         """Display information about planning process."""
 
         self.planner.info()

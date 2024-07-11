@@ -3,6 +3,7 @@
 import math
 import time
 import warnings
+from typing import Tuple, List
 from astar import AStar
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path, reduce_waypoints_grid
@@ -13,8 +14,12 @@ class AStarGrid(AStar):
     """Occupancy grid based implementation of A*."""
 
     def __init__(
-        self, grid, heuristic="euclidean", diagonal_motion=True, compress_path=False
-    ):
+        self,
+        grid,
+        heuristic: str = "euclidean",
+        diagonal_motion: bool = True,
+        compress_path: bool = False,
+    ) -> None:
         """
         Creates an instance of grid based A* planner.
 
@@ -34,7 +39,7 @@ class AStarGrid(AStar):
         self._set_actions()
         self._set_heuristic()
 
-    def _set_actions(self):
+    def _set_actions(self) -> None:
         """
         Generates the actions available
         """
@@ -53,7 +58,7 @@ class AStarGrid(AStar):
         keys = list(self.actions.keys())
         self.selected_actions = keys if self.diagonal_motion else keys[:4]
 
-    def _set_heuristic(self):
+    def _set_heuristic(self) -> None:
         """
         Sets the heuristic
         """
@@ -75,7 +80,9 @@ class AStarGrid(AStar):
             warnings.warn(f"Defaulting to heuristic : 'none' ")
             self._heuristic = lambda p1, p2: 0
 
-    def heuristic_cost_estimate(self, cell1, cell2):
+    def heuristic_cost_estimate(
+        self, cell1: Tuple[int, int], cell2: Tuple[int, int]
+    ) -> float:
         """
         Compute heuristic cost estimate using selected heuristic.
 
@@ -86,7 +93,7 @@ class AStarGrid(AStar):
         """
         return self._heuristic(cell1, cell2)
 
-    def distance_between(self, cell1, cell2):
+    def distance_between(self, cell1: Tuple[int, int], cell2: Tuple[int, int]) -> float:
         """
         Computes the distance between 2 cells in the grid.
 
@@ -99,7 +106,7 @@ class AStarGrid(AStar):
         x2, y2 = cell2
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-    def neighbors(self, cell):
+    def neighbors(self, cell: Tuple[int, int]) -> List[Tuple[int, int]]:
         """
         Get the neighbors of a cell in the grid.
 
@@ -114,7 +121,7 @@ class AStarGrid(AStar):
                 neighbours_list.append((x, y))
         return neighbours_list
 
-    def plan(self, start, goal):
+    def plan(self, start: Pose, goal: Pose) -> Path:
         """
         Plans a path from start to goal.
 
@@ -148,7 +155,7 @@ class AStarGrid(AStar):
 class AstarPlanner(PathPlannerBase):
     """Factory class for A* path planner."""
 
-    def __init__(self, **planner_config):
+    def __init__(self, **planner_config: dict) -> None:
         """
         Creates an instance of A* planner.
 
@@ -166,7 +173,7 @@ class AstarPlanner(PathPlannerBase):
                 "A-star does not have a standalone graph based implementation."
             )
 
-    def plan(self, start, goal):
+    def plan(self, start: Pose, goal: Pose) -> Path:
         """
         Plans a path from start to goal.
 

@@ -1,15 +1,18 @@
 """ Specification of the interface that all planners must implement. """
 
+from typing import Union, Optional
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
 from pyrobosim.utils.motion import Path
+from ..utils.pose import Pose
+from ..utils.search_graph import Node
 
 
 class PathPlannerBase:
     """The base class for path planners."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Creates an instance of PathPlannerBase.
         """
@@ -21,7 +24,7 @@ class PathPlannerBase:
         self.graphs_updated = False
         self.latest_path = Path()
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Resets the state of the planner.
         Sub-classes should add their own relevant mechanisms
@@ -34,7 +37,7 @@ class PathPlannerBase:
         self.latest_path = Path()
         self.graphs_updated = False
 
-    def plan(self, start, goal):
+    def plan(self, start: Union[Pose, Node], goal: Union[Pose, Node]) -> Path:
         """
         Plans a path from start to goal.
 
@@ -58,7 +61,13 @@ class PathPlannerBase:
         print(f"Planning time : {self.planning_time}")
         print(f"Number of waypoints : {self.latest_path.num_poses}")
 
-    def plot(self, axes, show_graph=True, path=None, path_color="m"):
+    def plot(
+        self,
+        axes: plt.axes,
+        show_graph: bool = True,
+        path: Optional[Path] = None,
+        path_color: str = "m",
+    ) -> None:
         """
         Plots the planned path on a specified set of axes.
 
@@ -129,7 +138,7 @@ class PathPlannerBase:
             artists["path"] = path_artists
         return artists
 
-    def show(self):
+    def show(self) -> None:
         """
         Shows the planned path in a new figure.
 

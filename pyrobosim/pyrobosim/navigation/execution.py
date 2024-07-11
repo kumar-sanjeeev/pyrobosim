@@ -2,8 +2,10 @@
 
 import time
 import warnings
+from typing import Optional
 
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..utils.motion import Path
 
 
 class ConstantVelocityExecutor:
@@ -13,7 +15,12 @@ class ConstantVelocityExecutor:
     go to the next pose.
     """
 
-    def __init__(self, linear_velocity=1.0, dt=0.1, max_angular_velocity=None):
+    def __init__(
+        self,
+        linear_velocity: float = 1.0,
+        dt: float = 0.1,
+        max_angular_velocity: Optional[float] = None,
+    ) -> None:
         """
         Creates a constant velocity path executor.
 
@@ -29,7 +36,7 @@ class ConstantVelocityExecutor:
         self.dt = dt
         self.robot = None
 
-    def execute(self, path, realtime_factor=1.0):
+    def execute(self, path: Path, realtime_factor: float = 1.0) -> bool:
         """
         Generates and executes a trajectory on the robot.
 

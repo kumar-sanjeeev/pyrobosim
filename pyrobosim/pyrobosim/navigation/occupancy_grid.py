@@ -1,20 +1,32 @@
 """ Occupancy grid utilities. """
 
+import os
+import warnings
+from typing import Optional, Tuple, TYPE_CHECKING
+
+import yaml
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from PIL import Image
-import warnings
-import yaml
+
+from ..core.world import World
+
+if TYPE_CHECKING:
+    from .occupancy_grid import OccupancyGrid
 
 
 class OccupancyGrid:
     """Lightweight wrapper containing occupancy grid information."""
 
     def __init__(
-        self, data, resolution, origin=(0.0, 0.0), occ_thresh=0.65, free_thresh=0.2
-    ):
+        self,
+        data: np.ndarray,
+        resolution: float,
+        origin: Tuple[float, float] = (0.0, 0.0),
+        occ_thresh: float = 0.65,
+        free_thresh: float = 0.2,
+    ) -> None:
         """
         Creates an occupancy grid.
 
@@ -39,7 +51,7 @@ class OccupancyGrid:
         self.occ_thresh = occ_thresh
         self.free_thresh = free_thresh
 
-    def show(self):
+    def show(self) -> None:
         """Displays the occupancy grid as an image."""
         rot_img = np.logical_not(np.rot90(self.data))
         plt.imshow(rot_img, cmap="gray", interpolation="nearest")
@@ -55,7 +67,7 @@ class OccupancyGrid:
         )
         plt.show()
 
-    def is_in_bounds(self, pos):
+    def is_in_bounds(self, pos: Tuple[int, int]) -> bool:
         """
         Check if a given (x,y) position is within grid limits
 
@@ -69,7 +81,7 @@ class OccupancyGrid:
         y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
 
-    def world_to_grid(self, pos):
+    def world_to_grid(self, pos: Tuple[int, int]) -> Tuple[int, int]:
         """
         Convert a given world position in world frame to grid frame.
 
@@ -82,7 +94,7 @@ class OccupancyGrid:
         y_grid = math.floor((pos[1] - self.origin[1]) / self.resolution)
         return (x_grid, y_grid)
 
-    def grid_to_world(self, pos):
+    def grid_to_world(self, pos: Tuple[int, int]) -> Tuple[float, float]:
         """
         Convert a given world position in grid frame to world frame.
 
@@ -95,7 +107,7 @@ class OccupancyGrid:
         y_world = (pos[1] * self.resolution) + self.origin[1]
         return (x_world, y_world)
 
-    def is_occupied(self, pos):
+    def is_occupied(self, pos: Tuple[int, int]) -> bool:
         """
         Check if a given position in the grid is occupied
 
@@ -106,7 +118,9 @@ class OccupancyGrid:
         """
         return (not self.is_in_bounds(pos)) or self.data[pos[0], pos[1]] == 1
 
-    def has_straight_line_connection(self, pointA, pointB):
+    def has_straight_line_connection(
+        self, pointA: Tuple[int, int], pointB: Tuple[int, int]
+    ) -> Tuple[bool, Tuple[int, int]]:
         """
         Checks if 2 points can be connected in a straight line.
 
@@ -163,7 +177,7 @@ class OccupancyGrid:
                 decision += (dy << 1) - (dx << 1)
         return can_connect, last_point
 
-    def save_to_file(self, folder, filename="world_map"):
+    def save_to_file(self, folder: str, filename: str = "world_map"):
         """
         Save occupancy grid to PGM and YAML files compatible with ROS tools.
 
@@ -209,7 +223,7 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     @classmethod
-    def from_file(cls, folder, filename=None):
+    def from_file(cls, folder: str, filename: Optional[str] = None):
         """
         Loads an occupancy grid from a folder containing a PGM image file and a YAML file.
 
@@ -259,13 +273,13 @@ class OccupancyGrid:
     @classmethod
     def from_world(
         cls,
-        world,
-        resolution,
-        inflation_radius=0.0,
-        xlim=None,
-        ylim=None,
-        auto_lim_padding_ratio=0.05,
-    ):
+        world: World,
+        resolution: float,
+        inflation_radius: float = 0.0,
+        xlim: Optional[Tuple[float, float]] = None,
+        ylim: Optional[Tuple[float, float]] = None,
+        auto_lim_padding_ratio: float = 0.05,
+    ) -> "OccupancyGrid":
         """
         Generates an occupancy grid of a world at a given resolution.
 
