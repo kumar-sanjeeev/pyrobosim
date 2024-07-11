@@ -3,6 +3,7 @@
 import numpy as np
 import signal
 import sys
+from typing import List, Optional
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import QTimer
@@ -11,10 +12,12 @@ from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from .world_canvas import WorldCanvas
+from ..core.world import World
+from ..core.robot import Robot
 from ..utils.knowledge import query_to_entity
 
 
-def start_gui(world):
+def start_gui(world: World) -> None:
     """
     Helper function to start a pyrobosim GUI for a world model.
 
@@ -35,7 +38,7 @@ def start_gui(world):
 class PyRoboSimGUI(QtWidgets.QApplication):
     """Main pyrobosim GUI class."""
 
-    def __init__(self, world, args, show=True):
+    def __init__(self, world: World, args: List[str], show: bool = True) -> None:
         """
         Creates an instance of the pyrobosim GUI.
 
@@ -56,7 +59,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     """Main application window for the pyrobosim GUI."""
 
-    def __init__(self, world, show=True, *args, **kwargs):
+    def __init__(self, world: World, show: bool = True, *args, **kwargs) -> None:
         """
         Creates an instance of the pyrobosim application main window.
 
@@ -80,12 +83,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.show()
         self.on_robot_changed()
 
-    def closeEvent(self, _):
+    def closeEvent(self, _) -> None:
         """Cleans up running threads on closing the window."""
         self.canvas.nav_animator.stop()
         self.canvas.thread_pool.waitForDone()
 
-    def set_window_dims(self, screen_fraction=0.8):
+    def set_window_dims(self, screen_fraction: float = 0.8) -> None:
         """
         Set window dimensions.
 
@@ -99,7 +102,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         window_y = int(screen.top() + 0.5 * (screen.height() - window_height))
         self.setGeometry(window_x, window_y, window_width, window_height)
 
-    def create_layout(self):
+    def create_layout(self) -> None:
         """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
 
@@ -177,14 +180,14 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.layout_created = True
 
-    def get_current_robot(self):
+    def get_current_robot(self) -> Robot:
         robot_name = self.robot_textbox.currentText()
         return self.world.get_robot_by_name(robot_name)
 
     ####################
     # State Management #
     ####################
-    def update_button_state(self):
+    def update_button_state(self) -> None:
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
         if robot:
@@ -205,7 +208,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         self.canvas.draw_and_sleep()
 
-    def set_buttons_during_action(self, state):
+    def set_buttons_during_action(self, state: bool) -> None:
         """
         Enables or disables buttons that should not be pressed while
         the robot is executing an action.
@@ -222,7 +225,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     ####################
     # Button Callbacks #
     ####################
-    def rand_pose_cb(self):
+    def rand_pose_cb(self) -> None:
         """Callback to randomize robot pose."""
         robot = self.get_current_robot()
         if not robot:
@@ -240,7 +243,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.show_world_state(navigating=True)
         self.canvas.draw()
 
-    def rand_goal_cb(self):
+    def rand_goal_cb(self) -> None:
         """Callback to randomize robot goal."""
         all_entities = (
             self.world.get_location_names()
@@ -250,17 +253,17 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
 
-    def rand_obj_cb(self):
+    def rand_obj_cb(self) -> None:
         """Callback to randomize manipulation object goal."""
         obj_name = np.random.choice(self.world.get_object_names())
         self.goal_textbox.setText(obj_name)
 
-    def on_robot_changed(self):
+    def on_robot_changed(self) -> None:
         """Callback when the currently selected robot changes."""
         self.canvas.show_objects()
         self.update_button_state()
 
-    def on_navigate_click(self):
+    def on_navigate_click(self) -> None:
         """Callback to navigate to a goal location."""
         robot = self.get_current_robot()
         if robot and robot.executing_action:
@@ -280,7 +283,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         print(f"[{robot.name}] Navigating to {loc}")
         self.canvas.navigate(robot, loc)
 
-    def on_pick_click(self):
+    def on_pick_click(self) -> None:
         """Callback to pick an object."""
         robot = self.get_current_robot()
         if robot:
@@ -300,7 +303,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
                 self.canvas.pick_object(robot, obj)
                 self.update_button_state()
 
-    def on_place_click(self):
+    def on_place_click(self) -> None:
         """Callback to place an object."""
         robot = self.get_current_robot()
         if robot and robot.manipulated_object is not None:
@@ -308,7 +311,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.place_object(robot)
             self.update_button_state()
 
-    def on_detect_click(self):
+    def on_detect_click(self) -> None:
         """Callback to detect objects."""
         robot = self.get_current_robot()
         if robot:
@@ -317,7 +320,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.detect_objects(robot, obj_query)
             self.update_button_state()
 
-    def on_open_click(self):
+    def on_open_click(self) -> None:
         """Callback to open a location."""
         robot = self.get_current_robot()
         if robot and robot.location:
@@ -325,7 +328,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.open_location(robot)
             self.update_button_state()
 
-    def on_close_click(self):
+    def on_close_click(self) -> None:
         """Callback to close a location."""
         robot = self.get_current_robot()
         if robot and robot.location:
