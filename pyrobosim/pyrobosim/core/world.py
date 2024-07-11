@@ -3,7 +3,7 @@
 import itertools
 import numpy as np
 import warnings
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any, Tuple
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -48,19 +48,19 @@ class World:
 
         # Connected apps
         self.has_gui = False
-        self.gui = None
+        self.gui: Any = None
         self.has_ros_node = False
-        self.ros_node = False
+        self.ros_node: Any = False
 
         # Robots
-        self.robots = []
+        self.robots: List = []
 
         # World entities (rooms, locations, objects, etc.)
-        self.name_to_entity = {}
-        self.rooms = []
-        self.hallways = []
-        self.locations = []
-        self.objects = []
+        self.name_to_entity: Dict[Any, Any] = {}
+        self.rooms: List = []
+        self.hallways: List = []
+        self.locations: List = []
+        self.objects: List = []
         self.set_metadata()
 
         # Counters
@@ -68,12 +68,12 @@ class World:
         self.num_hallways = 0
         self.num_locations = 0
         self.num_objects = 0
-        self.location_instance_counts = {}
-        self.object_instance_counts = {}
+        self.location_instance_counts: Dict[Any, Any] = {}
+        self.object_instance_counts: Dict[Any, Any] = {}
 
         # World bounds, will be set by update_bounds()
-        self.x_bounds = None
-        self.y_bounds = None
+        self.x_bounds: Any = None
+        self.y_bounds: Any = None
 
         # Other parameters
         self.max_object_sample_tries = (
@@ -119,7 +119,7 @@ class World:
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, **room_config: Union[Room, dict]) -> Optional[Room]:
+    def add_room(self, **room_config: Any) -> Optional[Room]:
         r"""
         Adds a room to the world.
 
@@ -206,7 +206,7 @@ class World:
 
         return True
 
-    def add_hallway(self, **hallway_config: Union[Hallway, dict]) -> Optional[Hallway]:
+    def add_hallway(self, **hallway_config: Any) -> Optional[Hallway]:
         r"""
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
@@ -388,9 +388,7 @@ class World:
         hallway.is_locked = False
         return True
 
-    def add_location(
-        self, **location_config: Union[Location, dict]
-    ) -> Optional[Location]:
+    def add_location(self, **location_config: Any) -> Optional[Location]:
         r"""
         Adds a location at the specified parent entity, usually a room.
 
@@ -465,9 +463,9 @@ class World:
 
     def update_location(
         self,
-        loc: Union[Location, str],
+        loc: Any,
         pose: Pose,
-        room: Optional[Union[Room, str]] = None,
+        room: Any = None,
     ) -> bool:
         """
         Updates an existing location in the world.
@@ -520,7 +518,7 @@ class World:
             spawn.set_pose_from_parent()
         return True
 
-    def remove_location(self, loc: Union[Location, str]) -> bool:
+    def remove_location(self, loc: Any) -> bool:
         """
         Cleanly removes a location from the world.
 
@@ -551,7 +549,7 @@ class World:
             return True
         return False
 
-    def add_object(self, **object_config: Union[Object, dict]) -> Optional[Object]:
+    def add_object(self, **object_config: Any) -> Optional[Object]:
         r"""
         Adds an object to a specific location.
 
@@ -663,8 +661,8 @@ class World:
 
     def update_object(
         self,
-        obj: Union[Object, str],
-        loc: Optional[Union[Location, ObjectSpawn, str]] = None,
+        obj: Union[Object, str, None],
+        loc: Any = None,
         pose: Optional[Pose] = None,
     ) -> bool:
         """
@@ -714,7 +712,7 @@ class World:
 
         return True
 
-    def remove_object(self, obj: Union[Object, str]) -> bool:
+    def remove_object(self, obj: Any) -> bool:
         """
         Cleanly removes an object from the world.
 
@@ -737,7 +735,7 @@ class World:
             self.gui.canvas.show_objects()
         return True
 
-    def remove_all_objects(self, restart_numbering: bool = True) -> Optional[bool]:
+    def remove_all_objects(self, restart_numbering: bool = True) -> None:
         """
         Cleanly removes all objects from the world.
 
@@ -754,7 +752,7 @@ class World:
     def add_robot(
         self,
         robot: Robot,
-        loc: Optional[Union[Room, Hallway, Location, ObjectSpawn, str]] = None,
+        loc: Any = None,
         pose: Optional[Pose] = None,
     ) -> None:
         """
@@ -785,7 +783,7 @@ class World:
         if loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
-                robot_pose = self.sample_free_robot_pose_uniform(
+                robot_pose: Any = self.sample_free_robot_pose_uniform(
                     robot, ignore_robots=False
                 )
                 if robot_pose is None:
@@ -985,7 +983,9 @@ class World:
 
         return entity
 
-    def get_hallways_from_rooms(self, room1: Room, room2: Room) -> Optional[Hallway]:
+    def get_hallways_from_rooms(
+        self, room1: Union[Room, str, None], room2: Union[Room, str, None]
+    ) -> Optional[List[Hallway]]:
         """
         Returns a list of hallways between two rooms.
 
@@ -999,12 +999,15 @@ class World:
         # Validate room input
         if isinstance(room1, str):
             room1 = self.get_room_by_name(room1)
-        if not isinstance(room1, Room):
+
+        if room1 is None or not isinstance(room1, Room):
             warnings.warn("Invalid room1 specified.")
             return []
+
         if isinstance(room2, str):
             room2 = self.get_room_by_name(room2)
-        if not isinstance(room2, Room):
+
+        if room2 is None or not isinstance(room2, Room):
             warnings.warn("Invalid room2 specified.")
             return []
 
@@ -1050,7 +1053,7 @@ class World:
         else:
             return [loc.name for loc in self.locations if loc.category in category_list]
 
-    def get_location_by_name(self, name: str) -> Optional[Hallway]:
+    def get_location_by_name(self, name: str) -> Optional[Location]:
         """
         Gets a location object by its name.
 
@@ -1110,6 +1113,8 @@ class World:
             if not category_list or loc.category in category_list:
                 spawn_list.extend(loc.children)
 
+        return spawn_list
+
     def get_object_spawn_names(
         self, category_list: Optional[List[str]] = None
     ) -> List[str]:
@@ -1126,6 +1131,8 @@ class World:
         for loc in self.locations:
             if not category_list or loc.category in category_list:
                 spawn_name_list.extend([spawn.name for spawn in loc.children])
+
+        return spawn_name_list
 
     def get_objects(self, category_list: Optional[str] = None) -> List[Object]:
         """
@@ -1273,7 +1280,7 @@ class World:
         # connect the points.
         return True
 
-    def check_occupancy(self, pose: Pose) -> bool:
+    def check_occupancy(self, pose: Any) -> bool:
         """
         Check if a pose in the world is occupied.
         :param pose: Pose for checking occupancy.
@@ -1327,8 +1334,8 @@ class World:
         :return: Collision-free pose if found, else ``None``.
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
-        xmin, xmax = self.x_bounds
-        ymin, ymax = self.y_bounds
+        xmin, xmax = self.x_bounds  # type: ignore[misc]
+        ymin, ymax = self.y_bounds  # type: ignore[misc]
         r = self.inflation_radius if robot is None else robot.radius
 
         for _ in range(self.max_object_sample_tries):
