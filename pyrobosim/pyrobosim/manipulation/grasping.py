@@ -1,7 +1,6 @@
 """ Grasping utilities. """
 
-from ..utils.pose import Pose
-
+from typing import Optional, List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,6 +8,8 @@ from enum import Enum
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from transforms3d.quaternions import rotate_vector, qinverse
+
+from ..utils.pose import Pose
 
 
 class GraspFace(Enum):
@@ -23,7 +24,7 @@ class GraspFace(Enum):
     RIGHT = 6
 
 
-normal_from_face = {
+normal_from_face: dict[GraspFace, Optional[np.ndarray]] = {
     GraspFace.UNKNOWN: None,
     GraspFace.FRONT: np.array([-1.0, 0.0, 0.0]),
     GraspFace.BACK: np.array([1.0, 0.0, 0.0]),
@@ -46,7 +47,7 @@ class GraspDirection(Enum):
     Z_NEG = 6
 
 
-vec_from_direction = {
+vec_from_direction: dict[GraspDirection, Optional[np.ndarray]] = {
     GraspDirection.UNKNOWN: None,
     GraspDirection.X_POS: np.array([1.0, 0.0, 0.0]),
     GraspDirection.X_NEG: np.array([-1.0, 0.0, 0.0]),
@@ -64,12 +65,12 @@ class Grasp:
 
     def __init__(
         self,
-        properties,
-        origin_wrt_object,
-        origin_wrt_world=None,
-        face=GraspFace.UNKNOWN,
-        direction=GraspDirection.UNKNOWN,
-    ):
+        properties: "ParallelGraspProperties",
+        origin_wrt_object: Pose,
+        origin_wrt_world: Optional[Pose] = None,
+        face: "GraspFace" = GraspFace.UNKNOWN,
+        direction: "GraspDirection" = GraspDirection.UNKNOWN,
+    ) -> None:
         """
         Creates a grasp object instance.
 
@@ -90,7 +91,7 @@ class Grasp:
         self.face = face
         self.direction = direction
 
-    def translate_origin(self, vec):
+    def translate_origin(self, vec: List[float]) -> List[float]:
         """
         Adds the origin position to a specified position vector.
 
@@ -105,7 +106,7 @@ class Grasp:
             self.origin_wrt_object.z + vec[2],
         ]
 
-    def plot(self, ax, color, alpha=0.8):
+    def plot(self, ax: plt.axes, color: str, alpha: float = 0.8) -> None:
         """Displays the grasp on an existing set of axes."""
         d = self.properties.depth
         h = self.properties.height / 2
@@ -131,7 +132,7 @@ class Grasp:
         ]
         ax.add_collection3d(Poly3DCollection(gripper_verts, color=color, alpha=alpha))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Printable string representation"""
         display_str = f"Grasp:\n"
         display_str += f"\tOrigin w.r.t. object:{self.origin_wrt_object}\n"
@@ -160,8 +161,13 @@ class ParallelGraspProperties:
     """
 
     def __init__(
-        self, max_width, depth, height, width_clearance=0.0, depth_clearance=0.0
-    ):
+        self,
+        max_width: float,
+        depth: float,
+        height: float,
+        width_clearance: float = 0.0,
+        depth_clearance: float = 0.0,
+    ) -> None:
         """
         Creates a parallel gripper grasp properties instance.
 
@@ -182,7 +188,7 @@ class ParallelGraspProperties:
         self.width_clearance = width_clearance
         self.depth_clearance = depth_clearance
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Printable string representation"""
         display_str = "Parallel jaw gripper properties:\n"
         display_str += (
@@ -196,7 +202,7 @@ class GraspGenerator:
     Generates grasps given object dimensions and pose relative to a robot.
     """
 
-    def __init__(self, properties):
+    def __init__(self, properties: ParallelGraspProperties) -> None:
         """
         Creates a grasp generator instance given grasping properties.
 
@@ -205,7 +211,9 @@ class GraspGenerator:
         """
         self.properties = properties
 
-    def compute_robot_facing_rot(self, object_pose=Pose(), robot_pose=None):
+    def compute_robot_facing_rot(
+        self, object_pose: Pose = Pose(), robot_pose: Optional[Pose] = None
+    ) -> np.ndarray:
         """
         Computes the rotation matrix to convert from nominal cuboid orientation to robot-facing orientation.
 
@@ -284,7 +292,12 @@ class GraspGenerator:
         rot_matrix[:, 2] = z_vec
         return rot_matrix
 
-    def should_try_grasp(self, faces_enabled, face_normals, face_vec):
+    def should_try_grasp(
+        self,
+        faces_enabled: List[bool],
+        face_normals: List[np.ndarray],
+        face_vec: np.ndarray,
+    ) -> Tuple[bool, GraspFace]:
         """
         Helper function to validate whether to compute grasps on a specific face.
 
@@ -333,7 +346,13 @@ class GraspGenerator:
 
         return (try_grasp, grasp_face)
 
-    def _create_grasp(self, grasp_center, grasp_face, grasp_dir, object_pose):
+    def _create_grasp(
+        self,
+        grasp_center: Pose,
+        grasp_face: GraspFace,
+        grasp_dir: GraspDirection,
+        object_pose: Pose,
+    ) -> Grasp:
         """
         Helper function to create a grasp object.
 
@@ -364,13 +383,13 @@ class GraspGenerator:
 
     def generate(
         self,
-        object_dims,
-        object_pose=Pose(),
-        robot_pose=None,
-        top_grasps=True,
-        front_grasps=True,
-        side_grasps=True,
-    ):
+        object_dims: List[float],
+        object_pose: Pose = Pose(),
+        robot_pose: Optional[Pose] = None,
+        top_grasps: bool = True,
+        front_grasps: bool = True,
+        side_grasps: bool = True,
+    ) -> List[Grasp]:
         """
         Generates a set of axis-aligned grasps for a cuboid object.
 
@@ -543,12 +562,12 @@ class GraspGenerator:
 
     def show_grasps(
         self,
-        object_dims,
-        grasps,
-        object_pose=Pose(),
-        robot_pose=None,
-        object_footprint=None,
-    ):
+        object_dims: List[float],
+        grasps: List[Grasp],
+        object_pose: Pose = Pose(),
+        robot_pose: Optional[Pose] = None,
+        object_footprint: Optional[np.ndarray] = None,
+    ) -> None:
         """
         Display the grasps on top of an object.
 
