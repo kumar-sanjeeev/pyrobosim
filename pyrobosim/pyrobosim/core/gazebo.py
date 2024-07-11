@@ -3,16 +3,12 @@
 import os
 import shutil
 import itertools
-from typing import Optional, Union, Literal
-from shapely.geometry import LineString, Polygon, MultiPolygon
-from shapely.ops import split
+from typing import Optional, Literal, Any
+from shapely.geometry import LineString, Polygon, MultiPolygon  # type: ignore
+from shapely.ops import split  # type: ignore
 
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
 from .world import World
-from .room import Room
-from .hallway import Hallway
-from .locations import Location
-from .objects import Object
 
 
 FOUR_SPACES = " " * 4
@@ -41,7 +37,7 @@ class WorldGazeboExporter:
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(self, classic: bool = False, out_folder: Optional[str] = None) -> None:
+    def export(self, classic: bool = False, out_folder: Optional[str] = None) -> str:
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -214,7 +210,7 @@ class WorldGazeboExporter:
     def create_sdf_link_text(
         self,
         template_text: str,
-        entity: Union[Room, Hallway, Location, Object],
+        entity: Any,
         entity_type: Literal["walls", "object"],
     ) -> str:
         """

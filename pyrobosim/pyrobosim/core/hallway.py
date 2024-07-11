@@ -2,9 +2,9 @@
 
 from typing import List, Tuple
 import numpy as np
-from shapely import intersects_xy
-from shapely.geometry import LineString, MultiLineString
-from shapely.plotting import patch_from_polygon
+from shapely import intersects_xy # type: ignore
+from shapely.geometry import LineString, MultiLineString # type: ignore
+from shapely.plotting import patch_from_polygon # type: ignore
 
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
@@ -23,8 +23,8 @@ class Hallway:
         conn_method: str = "auto",
         offset: float = 0,
         conn_angle: float = 0,
-        conn_points: List[Tuple[float, float]] = [],
-        color: Tuple[float, float, float] = [0.4, 0.4, 0.4],
+        conn_points: List = [],
+        color: List[float] = [0.4, 0.4, 0.4],
         wall_width: float = 0.2,
         is_open: bool = True,
         is_locked: bool = False,
@@ -78,7 +78,7 @@ class Hallway:
         self.wall_width = wall_width
         self.offset = offset
         self.viz_color = color
-        self.graph_nodes = []
+        self.graph_nodes: List = []
         self.is_open = is_open
         self.is_locked = is_locked
 
