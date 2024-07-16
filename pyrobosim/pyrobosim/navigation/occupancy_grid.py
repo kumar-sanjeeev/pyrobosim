@@ -10,10 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from ..core.world import World
 
 if TYPE_CHECKING:
     from .occupancy_grid import OccupancyGrid
+    from ..core.world import World
 
 
 class OccupancyGrid:
@@ -273,7 +273,7 @@ class OccupancyGrid:
     @classmethod
     def from_world(
         cls,
-        world: World,
+        world: "World",
         resolution: float,
         inflation_radius: float = 0.0,
         xlim: Optional[Tuple[float, float]] = None,

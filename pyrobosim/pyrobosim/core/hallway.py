@@ -2,9 +2,9 @@
 
 from typing import List, Tuple
 import numpy as np
-from shapely import intersects_xy # type: ignore
-from shapely.geometry import LineString, MultiLineString # type: ignore
-from shapely.plotting import patch_from_polygon # type: ignore
+from shapely import intersects_xy  # type: ignore
+from shapely.geometry import LineString, MultiLineString  # type: ignore
+from shapely.plotting import patch_from_polygon  # type: ignore
 
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon

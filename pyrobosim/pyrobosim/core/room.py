@@ -105,7 +105,7 @@ class Room:
             zorder=2,
         )
 
-    def get_collision_patch(self) -> matplotlib.patches.PathPatch:
+    def get_collision_patch(self):
         """
         Returns a patch of the collision polygon for debug visualization.
 
