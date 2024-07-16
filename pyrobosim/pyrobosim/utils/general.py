@@ -2,9 +2,10 @@
 
 import os
 import yaml
+from typing import Optional, Any
 
 
-def get_data_folder():
+def get_data_folder() -> str:
     """
     Get a path to the folder containing data.
 
@@ -18,7 +19,7 @@ def get_data_folder():
     """
     try:
         # If running as a ROS 2 node, get the data folder from the package share directory.
-        from ament_index_python.packages import get_package_share_directory
+        from ament_index_python.packages import get_package_share_directory # type: ignore
 
         data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
     except:
@@ -33,7 +34,7 @@ def get_data_folder():
 class EntityMetadata:
     """Represents metadata about entities, such as locations or objects."""
 
-    def __init__(self, filename):
+    def __init__(self, filename: Any):
         """
         Creates metadata from a YAML file.
 
@@ -51,7 +52,7 @@ class EntityMetadata:
             self.filename = None
             self.data = {}
 
-    def has_category(self, category):
+    def has_category(self, category: str) -> bool:
         """
         Check whether a category name is in the metadata.
 
@@ -62,7 +63,7 @@ class EntityMetadata:
         """
         return category in self.data
 
-    def get(self, category):
+    def get(self, category: str) -> dict:
         """
         Get metadata about a specific category.
 
@@ -80,7 +81,7 @@ class InvalidEntityCategoryException(Exception):
     pass
 
 
-def replace_special_yaml_tokens(in_text, root_dir=None):
+def replace_special_yaml_tokens(in_text, root_dir: Optional[str] = None) -> str:
     """
     Replaces special tokens permitted in our YAML specification.
     If you want to add any other special tokens, you should do that here.
