@@ -24,7 +24,7 @@ class GraspFace(Enum):
     RIGHT = 6
 
 
-normal_from_face: dict[GraspFace, Optional[np.ndarray]] = {
+normal_from_face = {
     GraspFace.UNKNOWN: None,
     GraspFace.FRONT: np.array([-1.0, 0.0, 0.0]),
     GraspFace.BACK: np.array([1.0, 0.0, 0.0]),
@@ -47,7 +47,7 @@ class GraspDirection(Enum):
     Z_NEG = 6
 
 
-vec_from_direction: dict[GraspDirection, Optional[np.ndarray]] = {
+vec_from_direction = {
     GraspDirection.UNKNOWN: None,
     GraspDirection.X_POS: np.array([1.0, 0.0, 0.0]),
     GraspDirection.X_NEG: np.array([-1.0, 0.0, 0.0]),

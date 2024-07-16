@@ -10,7 +10,6 @@ from shapely.ops import split  # type: ignore
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
 from .world import World
 
-
 FOUR_SPACES = " " * 4
 EIGHT_SPACES = " " * 8
 TWELVE_SPACES = " " * 8
