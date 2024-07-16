@@ -12,7 +12,7 @@ from .world import World
 
 FOUR_SPACES = " " * 4
 EIGHT_SPACES = " " * 8
-TWELVE_SPACES = " " * 8
+TWELVE_SPACES = " " * 12
 
 
 class WorldGazeboExporter:
@@ -44,7 +44,7 @@ class WorldGazeboExporter:
         Instructions to add to the Gazebo model path and spawn the world
         are printed to the Terminal.
 
-        :param classic: If True, exports to Gazebo Classic, else to Gazebo.
+        :param classic: If True, exports to Gazebo Classic, else to Gazebo Sim.
         :type classic: bool, optional
         :param out_folder: The output folder. If not specified, defaults to the pyrobosim `data/worlds` folder.
         :type out_folder: bool, optional

@@ -78,7 +78,8 @@ class Hallway:
         self.wall_width = wall_width
         self.offset = offset
         self.viz_color = color
-        self.graph_nodes: List = []
+        self.graph_nodes = []
+        self.nav_poses = []
         self.is_open = is_open
         self.is_locked = is_locked
 
@@ -251,7 +252,9 @@ class Hallway:
         )
         self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
 
-    def __repr__(self) -> str:
+        self.nav_poses = [self.graph_nodes[0].pose, self.graph_nodes[-1].pose]
+
+    def __repr__(self):
         """Returns printable string."""
         return f"Hallway: {self.name}"
 

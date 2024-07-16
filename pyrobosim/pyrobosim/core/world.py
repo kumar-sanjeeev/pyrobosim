@@ -10,6 +10,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.general import InvalidEntityCategoryException
 from ..utils.pose import Pose
 from ..utils.knowledge import (
@@ -296,55 +297,83 @@ class World:
 
         :param hallway: Hallway object to open.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: True if the hallway was successfully opened, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if not hallway in self.hallways:
-            warnings.warn("Invalid hallway specified.")
-            return False
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if hallway.is_open:
-            warnings.warn(f"{hallway} is already open.")
-            return False
+            message = f"{hallway} is already open."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if hallway.is_locked:
-            warnings.warn(f"{hallway} is locked.")
-            return False
+            message = f"{hallway} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         hallway.is_open = True
         if self.has_gui:
             self.gui.canvas.show_hallways()
             self.gui.canvas.draw_and_sleep()
-        return True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_hallway(self, hallway: Hallway) -> bool:
+    def close_hallway(self, hallway, ignore_robots=[]):
         """
         Close a hallway between two rooms.
 
         :param hallway: Hallway object to close.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: True if the hallway was successfully closed, else False.
-        :rtype: bool
+        :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
+        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if not hallway in self.hallways:
-            warnings.warn("Invalid hallway specified.")
-            return False
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if not hallway.is_open:
-            warnings.warn(f"{hallway} is already closed.")
-            return False
+            message = f"{hallway} is already closed."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if hallway.is_locked:
-            warnings.warn(f"{hallway} is locked.")
-            return False
+            message = f"{hallway} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        for robot in [r for r in self.robots if r not in ignore_robots]:
+            if hallway.is_collision_free(robot.get_pose()):
+                message = f"Robot {robot.name} is in {hallway}. Cannot close."
+                warnings.warn(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                )
 
         hallway.is_open = False
         if self.has_gui:
             self.gui.canvas.show_hallways()
             self.gui.canvas.draw_and_sleep()
-        return True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_hallway(self, hallway: Hallway) -> bool:
         """
@@ -352,20 +381,26 @@ class World:
 
         :param hallway: Hallway object to lock.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: True if the hallway was successfully locked, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if not hallway in self.hallways:
-            warnings.warn("Invalid hallway specified.")
-            return False
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if hallway.is_locked:
-            warnings.warn(f"{hallway} is already locked.")
-            return False
+            message = f"{hallway} is already locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         hallway.is_locked = True
-        return True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def unlock_hallway(self, hallway: Hallway) -> bool:
         """
@@ -373,20 +408,26 @@ class World:
 
         :param hallway: Hallway object to unlock.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: True if the hallway was successfully unlocked, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if not hallway in self.hallways:
-            warnings.warn("Invalid hallway specified.")
-            return False
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         if not hallway.is_locked:
-            warnings.warn(f"{hallway} is already unlocked.")
-            return False
+            message = f"{hallway} is already unlocked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         hallway.is_locked = False
-        return True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def add_location(self, **location_config: Any) -> Optional[Location]:
         r"""
@@ -1016,7 +1057,7 @@ class World:
         for hall in room1.hallways:
             is_valid_hallway = (
                 (hall.room_start == room1) and (hall.room_end == room2)
-            ) or ((hall.room_end == room2) and (hall.room_end == room1))
+            ) or ((hall.room_start == room2) and (hall.room_end == room1))
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways
@@ -1085,15 +1126,25 @@ class World:
             This could be a room, hallway, or object spawn.
         :rtype: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         """
-        # First, check rooms and hallways.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return entity
-        # Then, check object spawns.
-        for loc in self.locations:
-            for spawn in loc.children:
-                if spawn.is_inside(pose):
-                    return spawn
+        # Check hallways and their nav poses.
+        for hallway in self.hallways:
+            for nav_pose in hallway.nav_poses:
+                if pose.is_approx(nav_pose):
+                    return hallway
+            if hallway.is_collision_free(pose):
+                return hallway
+        # Check rooms and the locations / object spawns inside them.
+        for room in self.rooms:
+            if room.is_collision_free(pose):
+                for location in room.locations:
+                    for spawn in location.children:
+                        for nav_pose in spawn.nav_poses:
+                            if pose.is_approx(nav_pose):
+                                return spawn
+                    for nav_pose in location.nav_poses:
+                        if pose.is_approx(nav_pose):
+                            return location
+                return room
         return None
 
     def get_object_spawns(
