@@ -1,17 +1,21 @@
 """ Graph search utilities. """
 
 import warnings
+from typing import Optional, Set, List, Any
 
 from astar import AStar
 import numpy as np
 
 from .motion import Path
+from .pose import Pose
 
 
 class Node:
     """Graph node representation."""
 
-    def __init__(self, pose, parent=None, cost=0.0):
+    def __init__(
+        self, pose: Pose, parent: Optional["Node"] = None, cost: float = 0.0
+    ) -> None:
         """
         Creates a graph node.
 
@@ -25,13 +29,13 @@ class Node:
         self.pose = pose
         self.parent = parent
         self.cost = cost
-        self.neighbors = set()  # used in graph based planners
+        self.neighbors: Set = set()  # used in graph based planners
 
 
 class Edge:
     """Graph edge representation."""
 
-    def __init__(self, nodeA, nodeB):
+    def __init__(self, nodeA: Node, nodeB: Node) -> None:
         """
         Creates a graph edge.
         :param nodeA: First node
@@ -47,7 +51,12 @@ class Edge:
 class SearchGraph:
     """Graph representation class."""
 
-    def __init__(self, color=[0, 0, 0], color_alpha=0.5, use_planner=False):
+    def __init__(
+        self,
+        color: List[int] = [0, 0, 0],
+        color_alpha: float = 0.5,
+        use_planner: bool = False,
+    ) -> None:
         """
         Creates an instance of SearchGraph.
         :param color: The display color for the graph.
@@ -58,15 +67,15 @@ class SearchGraph:
         :type use_planner: bool
         """
 
-        self.nodes = set()
-        self.edges = set()
+        self.nodes: Set = set()
+        self.edges: Set = set()
         self.color = color
         self.color_alpha = color_alpha
         self.use_planner = use_planner
         if self.use_planner:
             self.path_finder = SearchGraphPlanner()
 
-    def add_node(self, node):
+    def add_node(self, node: Node) -> None:
         """
         Adds a node to the graph.
 
@@ -76,7 +85,7 @@ class SearchGraph:
 
         self.nodes.add(node)
 
-    def remove_node(self, node):
+    def remove_node(self, node: Node) -> None:
         """
         Removes a node from the graph.
 
@@ -95,7 +104,7 @@ class SearchGraph:
         for edge in edges_to_remove:
             self.edges.discard(edge)
 
-    def add_edge(self, nodeA, nodeB):
+    def add_edge(self, nodeA: Node, nodeB: Node) -> Edge:
         """
         Adds an edge between 2 nodes.
 
@@ -112,7 +121,7 @@ class SearchGraph:
         nodeB.neighbors.add(nodeA)
         return edge
 
-    def remove_edge(self, nodeA, nodeB):
+    def remove_edge(self, nodeA: Node, nodeB: Node) -> None:
         """
         Removes an edge between 2 nodes.
         :param nodeA: The first node.
@@ -130,7 +139,7 @@ class SearchGraph:
         for edge in edges_to_remove:
             self.edges.discard(edge)
 
-    def nearest(self, pose):
+    def nearest(self, pose: Pose) -> Optional[Node]:
         """
         Get the nearest node in the graph to a specified pose.
         :param pose: Query pose
@@ -150,7 +159,7 @@ class SearchGraph:
                 n_nearest = n
         return n_nearest
 
-    def find_path(self, nodeA, nodeB):
+    def find_path(self, nodeA: Node, nodeB: Node) -> Path:
         """
         Finds a path from nodeA to nodeB.
 
@@ -192,7 +201,7 @@ class SearchGraphPlanner(AStar):
     def __init__(self):
         super().__init__()
 
-    def heuristic_cost_estimate(self, n0, n1):
+    def heuristic_cost_estimate(self, n0: "Node", n1: "Node") -> float:
         """
         Compute heuristic cost estimate using linear distance.
         :param n0: First node
@@ -216,7 +225,7 @@ class SearchGraphPlanner(AStar):
         """
         return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
 
-    def neighbors(self, n):
+    def neighbors(self, n: "Node") -> List["Node"]:
         """
         Get neighbors of a graph node.
         :param n: Node
@@ -226,7 +235,7 @@ class SearchGraphPlanner(AStar):
         """
         return list(n.neighbors)
 
-    def plan(self, start, goal):
+    def plan(self, start: "Node", goal: "Node") -> Any:
         """
         Plan path from start to goal.
 

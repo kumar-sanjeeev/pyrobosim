@@ -5,21 +5,24 @@ These tools rely heavily on the Shapely package.
 """
 
 import os
-import collada
+import collada  # type: ignore
 import numpy as np
 import trimesh
 import warnings
+from typing import List, Tuple, Dict, Optional, Union
 
-from scipy.spatial import ConvexHull
-from shapely.affinity import rotate, translate
-from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
-from shapely.geometry.polygon import orient
+from scipy.spatial import ConvexHull  # type: ignore
+from shapely.affinity import rotate, translate  # type: ignore
+from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE  # type: ignore
+from shapely.geometry.polygon import orient  # type: ignore
 
 from .general import replace_special_yaml_tokens
 from .pose import Pose, rot2d
 
 
-def add_coords(coords, offset):
+def add_coords(
+    coords: List[Tuple[float, float]], offset: Tuple[float, float]
+) -> List[Tuple[float, float]]:
     """
     Adds an offset (x,y) vector to a Shapely compatible list
     of coordinate tuples.
@@ -35,7 +38,9 @@ def add_coords(coords, offset):
     return [(c[0] + x, c[1] + y) for c in coords]
 
 
-def box_to_coords(dims, origin=[0, 0], ang=0):
+def box_to_coords(
+    dims: List[float], origin: List[float] = [0, 0], ang: float = 0
+) -> List[Tuple[float, float]]:
     """
     Converts box dimensions and origin to a Shapely compatible
     list of coordinate tuples.
@@ -68,7 +73,7 @@ def box_to_coords(dims, origin=[0, 0], ang=0):
     return coords
 
 
-def get_polygon_centroid(poly):
+def get_polygon_centroid(poly: Polygon) -> List[float]:
     """
     Gets a Shapely polygon centroid as a list.
 
@@ -80,7 +85,7 @@ def get_polygon_centroid(poly):
     return list(poly.centroid.coords)[0]
 
 
-def inflate_polygon(poly, radius):
+def inflate_polygon(poly: Polygon, radius: float) -> Polygon:
     """
     Inflates a Shapely polygon with options preconfigured for
     this world modeling framework.
@@ -98,7 +103,7 @@ def inflate_polygon(poly, radius):
     return orient(inflated_poly)
 
 
-def transform_polygon(polygon, pose):
+def transform_polygon(polygon: Polygon, pose: Pose) -> Polygon:
     """
     Transforms a Shapely polygon by a Pose object.
     The order of operations is first translation, and then rotation
@@ -119,7 +124,11 @@ def transform_polygon(polygon, pose):
     return polygon
 
 
-def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None):
+def polygon_and_height_from_footprint(
+    footprint: Dict,
+    pose: Optional[Pose] = None,
+    parent_polygon: Optional[Polygon] = None,
+) -> Optional[Tuple[Polygon, Optional[float]]]:
     """
     Returns a Shapely polygon and vertical (Z) height given footprint metadata.
     Valid footprint metadata comes from YAML files, and can include:
@@ -181,7 +190,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
     return (polygon, height)
 
 
-def polygon_and_height_from_mesh(mesh_data):
+def polygon_and_height_from_mesh(mesh_data: Dict) -> Tuple[Polygon, float]:
     """
     Returns the 2D footprint and the max height from a mesh
     NOTE: Right now this supports only DAE files, which is a
@@ -202,17 +211,19 @@ def polygon_and_height_from_mesh(mesh_data):
     scale = c.assetInfo.unitmeter
 
     # Get the convex hull of the 2D points.
-    footprint_pts = [[p[0] * scale, p[1] * scale] for p in mesh.convex_hull.vertices]
+    footprint_pts = [[p[0] * scale, p[1] * scale] for p in mesh.convex_hull.vertices]  # type: ignore
     hull = ConvexHull(footprint_pts)
     hull_pts = hull.points[hull.vertices, :]
 
     # Get the height as the max of the 3D points.
-    height = max([p[2] for p in mesh.convex_hull.vertices]) * scale
+    height = max([p[2] for p in mesh.convex_hull.vertices]) * scale  # type: ignore
 
     return (Polygon(hull_pts), height)
 
 
-def sample_from_polygon(polygon, max_tries=100):
+def sample_from_polygon(
+    polygon: Polygon, max_tries: int = 100
+) -> Tuple[Optional[float], Optional[float]]:
     """
     Samples a valid (x, y) tuple that is inside a Shapely polygon.
     This is done using rejection sampling, in which we sample from the
@@ -222,7 +233,7 @@ def sample_from_polygon(polygon, max_tries=100):
     :param polygon: Shapely polygon from which to sample
     :type polygon: :class:`shapely.geometry.Polygon`
     :param max_tries: Maximum tries for sampling.
-    :type max_tries: float
+    :type max_tries: fint
     :return: Sampled pose contained within the polygon. If no pose could be found, returns (None, None)
     :rtype: (float, float)
     """
@@ -237,15 +248,15 @@ def sample_from_polygon(polygon, max_tries=100):
     return None, None
 
 
-def convhull_to_rectangle(points):
+def convhull_to_rectangle(points: np.ndarray) -> Tuple[Pose, List[float], np.ndarray]:
     """
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
 
     :param points: an Nx2 matrix of convex hull XY coordinates
     :type points: :class:`numpy.ndarray`
-    :return: A tuple of rectangle origin pose and XY dimensions
-    :rtype: (:class:`pyrobosim.utils.pose.Pose`, list[float])
+    :return: A tuple of rectangle origin pose, XY dimensions and rectangle points array
+    :rtype: (:class:`pyrobosim.utils.pose.Pose`, list[float], np.ndarray)
     """
 
     # calculate edge angles

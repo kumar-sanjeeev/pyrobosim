@@ -3,9 +3,10 @@ Pose representation utilities.
 """
 
 import numpy as np
-from transforms3d.euler import euler2quat, quat2euler
-from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
+
+from transforms3d.euler import euler2quat, quat2euler  # type: ignore
+from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat  # type: ignore
 
 
 class Pose:
@@ -50,7 +51,7 @@ class Pose:
             self.set_euler_angles(roll, pitch, yaw)
 
     @classmethod
-    def from_list(cls, plist):
+    def from_list(cls, plist: List[float]) -> Any:
         """
         Creates a pose from a list. The assumptions are:
 
@@ -89,7 +90,7 @@ class Pose:
             raise ValueError("List must contain 2, 3, 4, 6, or 7 elements.")
 
     @classmethod
-    def from_transform(cls, tform):
+    def from_transform(cls, tform: np.ndarray) -> "Pose":
         """
         Creates a pose from a transformation matrix.
 
@@ -102,7 +103,7 @@ class Pose:
             x=tform[0, 3], y=tform[1, 3], z=tform[2, 3], q=mat2quat(tform[:3, :3])
         )
 
-    def get_linear_distance(self, other, ignore_z=False):
+    def get_linear_distance(self, other, ignore_z: bool = False) -> float:
         """
         Gets the straight-line distance between two poses.
 
@@ -118,7 +119,7 @@ class Pose:
             sum_squares += (other.z - self.z) ** 2
         return np.sqrt(sum_squares)
 
-    def get_angular_distance(self, other):
+    def get_angular_distance(self, other: "Pose") -> float:
         """
         Gets the angular distance between two poses, wrapped in the range [-pi, pi].
 
@@ -129,7 +130,7 @@ class Pose:
         """
         return np.arctan2(other.y - self.y, other.x - self.x)
 
-    def get_yaw(self):
+    def get_yaw(self) -> float:
         """
         Gets the yaw angle, in radians.
         This is a handy utility for 2D (or 2.5D) calculations.
@@ -139,7 +140,9 @@ class Pose:
         """
         return self.eul[2]
 
-    def set_euler_angles(self, roll=0.0, pitch=0.0, yaw=0.0):
+    def set_euler_angles(
+        self, roll: float = 0.0, pitch: float = 0.0, yaw: float = 0.0
+    ) -> None:
         """
         Sets the orientation component as Euler angles.
 
@@ -153,7 +156,7 @@ class Pose:
         self.eul = [roll, pitch, yaw]
         self.q = euler2quat(roll, pitch, yaw, "rxyz")
 
-    def set_quaternion(self, q):
+    def set_quaternion(self, q: List[float]) -> None:
         """
         Sets the orientation component as a quaternion.
 
@@ -164,7 +167,7 @@ class Pose:
         self.q = q / qnorm(q)
         self.eul = quat2euler(self.q, "rxyz")
 
-    def get_translation_matrix(self):
+    def get_translation_matrix(self) -> np.ndarray:
         """
         Gets a translation matrix from the pose representation.
 
@@ -175,7 +178,7 @@ class Pose:
         trans_mat[:3, 3] = [self.x, self.y, self.z]
         return trans_mat
 
-    def get_rotation_matrix(self):
+    def get_rotation_matrix(self) -> np.ndarray:
         """
         Gets a rotation matrix from the pose representation.
 
@@ -184,7 +187,7 @@ class Pose:
         """
         return quat2mat(self.q)
 
-    def get_transform_matrix(self):
+    def get_transform_matrix(self) -> np.ndarray:
         """
         Gets a homogeneous transformation matrix from the pose representation.
 
@@ -195,7 +198,7 @@ class Pose:
         tf_mat[:3, :3] = self.get_rotation_matrix()
         return tf_mat
 
-    def get_translation(self):
+    def get_translation(self) -> np.ndarray:
         """
         Gets the pose x y and z of the pose as an array.
 
@@ -204,7 +207,9 @@ class Pose:
         """
         return np.array([self.x, self.y, self.z])
 
-    def is_approx(self, other, rel_tol=1e-06, abs_tol=1e-06):
+    def is_approx(
+        self, other: "Pose", rel_tol: float = 1e-06, abs_tol: float = 1e-06
+    ) -> bool:
         """
         Check if two poses are approximately equal with a tolerance.
 
@@ -240,7 +245,7 @@ class Pose:
             self.q == other.q
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Representation for printing a Pose object.
 
@@ -255,7 +260,7 @@ class Pose:
         return f"Pose: [{pos_str}, {quat_str}]"
 
 
-def get_angle(p1, p2):
+def get_angle(p1: List[float], p2: List[float]) -> float:
     """
     Basic utility for getting angle between 2D points.
     The convention is the angle ``p2`` with reference to ``p1``.
@@ -270,7 +275,7 @@ def get_angle(p1, p2):
     return wrap_angle(np.arctan2(p2[1] - p1[1], p2[0] - p1[0]))
 
 
-def get_distance(p1, p2):
+def get_distance(p1: List[float], p2: List[float]) -> float:
     """
     Basic utility for getting distance between points.
 
@@ -285,7 +290,7 @@ def get_distance(p1, p2):
     return np.sqrt(sum(sqrs))
 
 
-def get_bearing_range(p1, p2):
+def get_bearing_range(p1: List[float], p2: List[float]) -> Tuple[float, float]:
     """
     Gets bearing and range between 2 points ``p1`` and ``p2``.
     The convention is the bearing of ``p2`` with reference to ``p1``.
@@ -302,7 +307,7 @@ def get_bearing_range(p1, p2):
     return (bear, rng)
 
 
-def rot2d(vec, ang):
+def rot2d(vec: Tuple[float, float], ang: Tuple[float, float]) -> Tuple[float, float]:
     """
     Rotates a 2-element vector by an angle.
 
@@ -319,7 +324,7 @@ def rot2d(vec, ang):
     return v_tf.flatten().tolist()
 
 
-def wrap_angle(ang):
+def wrap_angle(ang: float) -> float:
     """
     Wraps an angle in the range [-pi, pi].
 
