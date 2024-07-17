@@ -2,11 +2,18 @@
 Motion planning utilities.
 """
 
+from typing import List, Optional, Any, Tuple, TYPE_CHECKING
+
+from .pose import Pose
+
+if TYPE_CHECKING:
+    from ..core.world import World
+
 
 class Path:
     """Representation of a path for motion planning."""
 
-    def __init__(self, poses=[]):
+    def __init__(self, poses: List = []) -> None:
         """
         Creates a Path object instance.
 
@@ -15,7 +22,7 @@ class Path:
         """
         self.set_poses(poses)
 
-    def set_poses(self, poses):
+    def set_poses(self, poses: List[Pose]) -> None:
         """
         Sets the list of poses and computes derived quantities.
         Use this method to change the poses of an existing path,
@@ -30,7 +37,7 @@ class Path:
         for i in range(self.num_poses - 1):
             self.length += self.poses[i].get_linear_distance(self.poses[i + 1])
 
-    def fill_yaws(self):
+    def fill_yaws(self) -> None:
         """
         Fills in any yaw angles along a path to point at the next waypoint.
         """
@@ -43,7 +50,7 @@ class Path:
             yaw = prev_pose.get_angular_distance(cur_pose)
             cur_pose.set_euler_angles(yaw=yaw)
 
-    def is_collision_free(self, world, step_dist=0.01):
+    def is_collision_free(self, world: "World", step_dist: float = 0.01) -> bool:
         """
         Check whether a path is collision free in a specific world.
 
@@ -61,7 +68,7 @@ class Path:
                 return False
         return True
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """
         Check if two paths are exactly equal.
 
@@ -75,12 +82,12 @@ class Path:
 
         return self.poses == other.poses
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return brief description of the path."""
         print_str = f"Path with {self.num_poses} points, Length {self.length:.3f}"
         return print_str
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Print detailed description of the path."""
         print_str = f"Path with {self.num_poses} points."
         for i, p in enumerate(self.poses):
@@ -89,14 +96,16 @@ class Path:
         print(print_str)
 
 
-def reduce_waypoints_grid(grid, positions):
+def reduce_waypoints_grid(
+    grid, positions: List[Tuple[int, int]]
+) -> List[Tuple[int, int]]:
     """
     Reduces the number of waypoints in a generated path from a grid-based planner.
 
     :param grid: The occupancy grid associated with the generated path.
     :type grid: :class:`pyrobosim.navigation.occupancy_grid.OccupancyGrid`
-    :param poses: The list of positions that make up the path.
-    :type poses: list[(int, int)]
+    :param positions: The list of positions that make up the path.
+    :type positions: list[(int, int)]
     :return: The optimized list of waypoints.
     :rtype: list[(int, int)]
     """
@@ -118,7 +127,9 @@ def reduce_waypoints_grid(grid, positions):
     return waypoints
 
 
-def reduce_waypoints_polygon(world, poses, step_dist=0.01):
+def reduce_waypoints_polygon(
+    world: "World", poses: List[Pose], step_dist: float = 0.01
+) -> List[Pose]:
     """
     Reduces the number of waypoints in a path generated from a polygon based planner.
 
@@ -128,8 +139,8 @@ def reduce_waypoints_polygon(world, poses, step_dist=0.01):
     :type poses: list[:class: `pyrobosim.utils.pose.Pose`]
     :param step_dist: The step size for discretizing a straight line to check collisions.
     :type step_dist: float
-    :param max_dist: The maximum allowed connection distance.
-    :type max_dist: float, optional
+    :return: The updated waypoints.
+    :rtype: list[:class:`pyrobosim.utils.pose.Pose`]
     """
     waypoints = []
 

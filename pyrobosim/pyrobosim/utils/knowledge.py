@@ -7,8 +7,16 @@ import sys
 import warnings
 import numpy as np
 
+from typing import List, Optional, Any, TYPE_CHECKING
 
-def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
+if TYPE_CHECKING:
+    from ..core.robot import Robot
+    from ..core.world import World
+
+
+def apply_resolution_strategy(
+    entity_list: List, resolution_strategy: str, robot: Optional["Robot"] = None
+) -> Any:
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and
     applies a resolution strategy to get a single entity from that list that best
@@ -54,7 +62,13 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
         return None
 
 
-def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=None):
+def query_to_entity(
+    world: "World",
+    query_list: List[str],
+    mode: str,
+    resolution_strategy: str = "first",
+    robot: Optional["Robot"] = None,
+) -> Any:
     """
     Resolves a generic query list of strings to an entity
     mode can be "location" or "object"
@@ -193,13 +207,13 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
 
 def resolve_to_location(
-    world,
-    category=None,
-    room=None,
-    resolution_strategy="first",
-    robot=None,
-    expand_locations=False,
-):
+    world: "World",
+    category: Optional[str] = None,
+    room: Any = None,
+    resolution_strategy: str = "first",
+    robot: Optional["Robot"] = None,
+    expand_locations: bool = False,
+) -> Any:
     """
     Resolves a category/room query combination to a single specific location.
 
@@ -249,7 +263,7 @@ def resolve_to_location(
             else:
                 expanded_locations.append(loc)
     else:
-        expanded_locations = possible_locations
+        expanded_locations = possible_locations  # type: ignore
 
     loc = apply_resolution_strategy(
         expanded_locations, resolution_strategy, robot=robot
@@ -263,14 +277,14 @@ def resolve_to_location(
 
 
 def resolve_to_object(
-    world,
-    category=None,
-    location=None,
-    room=None,
-    resolution_strategy="first",
-    robot=None,
-    ignore_grasped=True,
-):
+    world: "World",
+    category: Optional[str] = None,
+    location: Optional[str] = None,
+    room: Any = None,
+    resolution_strategy: str = "first",
+    robot: Optional["Robot"] = None,
+    ignore_grasped: bool = True,
+) -> Any:
     """
     Resolves a category/location/room query to an object.
 
@@ -299,11 +313,11 @@ def resolve_to_object(
         possible_objects = robot.get_known_objects()
 
         if ignore_grasped and robot.manipulated_object in possible_objects:
-            possible_objects.remove(robot.manipulated_object)
+            possible_objects.remove(robot.manipulated_object)  # type: ignore
 
     # Filter by category
     if category is not None:
-        possible_objects = [obj for obj in possible_objects if obj.category in category]
+        possible_objects = [obj for obj in possible_objects if obj.category in category]  # type: ignore
 
     # Filter by room and/or location
     if room is not None:
@@ -314,7 +328,7 @@ def resolve_to_object(
         possible_objects = [
             obj
             for obj in possible_objects
-            if obj.parent.parent.parent.name == room_name
+            if obj.parent.parent.parent.name == room_name  # type: ignore
         ]
 
     if location is not None:
@@ -323,11 +337,11 @@ def resolve_to_object(
             for obj in possible_objects
             if (
                 obj.parent == location
-                or obj.parent.name == location
-                or obj.parent.parent == location
-                or obj.parent.parent.name == location
-                or obj.parent.category == location
-                or obj.parent.parent.category == location
+                or obj.parent.name == location  # type: ignore
+                or obj.parent.parent == location  # type: ignore
+                or obj.parent.parent.name == location  # type: ignore
+                or obj.parent.category == location  # type: ignore
+                or obj.parent.parent.category == location  # type: ignore
             )
         ]
 

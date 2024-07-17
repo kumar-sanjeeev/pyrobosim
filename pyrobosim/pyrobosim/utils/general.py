@@ -19,7 +19,7 @@ def get_data_folder() -> str:
     """
     try:
         # If running as a ROS 2 node, get the data folder from the package share directory.
-        from ament_index_python.packages import get_package_share_directory # type: ignore
+        from ament_index_python.packages import get_package_share_directory  # type: ignore
 
         data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
     except:
