@@ -36,12 +36,14 @@ class Location:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        category: Optional[str] = None,
-        pose: Optional[Pose] = None,
-        parent: Optional[Room] = None,
-        color: Optional[Tuple[float, float, float]] = None,
-    ) -> None:
+        name=None,
+        category=None,
+        pose=None,
+        parent=None,
+        color=None,
+        is_open=True,
+        is_locked=False,
+    ):
         """
         Creates a location instance.
 
@@ -56,6 +58,10 @@ class Location:
         :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0).
             If using a category with a defined color, this parameter overrides the category color.
         :type color: (float, float, float), optional
+        :param is_open: If True, the location is open, otherwise it is closed.
+        :type is_open: bool, optional
+        :param is_locked: If True, the location is locked, meaning it cannot be opened or closed.
+        :type is_locked: bool, optional
         """
         # Validate input
         if parent is None:
@@ -67,6 +73,8 @@ class Location:
         self.name = name
         self.category = category
         self.parent = parent
+        self.is_open = is_open
+        self.is_locked = is_locked
 
         self.metadata = Location.metadata.get(self.category)
         if not self.metadata:
@@ -167,11 +175,11 @@ class Location:
         """Updates the visualization polygon for the location."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
-            facecolor=None,
+            facecolor=None if self.is_open else self.viz_color,
             edgecolor=self.viz_color,
             linewidth=2,
-            fill=None,
-            alpha=0.75,
+            fill=not self.is_open,
+            alpha=0.5,
             zorder=2,
         )
 
@@ -297,7 +305,12 @@ class ObjectSpawn:
             x, y = pose[0], pose[1]
         return intersects_xy(self.polygon, x, y)
 
-    def update_visualization_polygon(self) -> None:
+    @property
+    def is_open(self):
+        """Property to check that an object spawn is open through its parent location."""
+        return self.parent.is_open
+
+    def update_visualization_polygon(self):
         """Updates the visualization polygon for the object spawn."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
