@@ -11,7 +11,10 @@ from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
-from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..navigation.path_planner import PathPlanner
+from ..manipulation.grasping import GraspGenerator
+from ..navigation.execution import ConstantVelocityExecutor
+from ..planning.actions import ExecutionResult, ExecutionStatus, TaskAction, TaskPlan
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
