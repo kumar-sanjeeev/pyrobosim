@@ -199,7 +199,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         else:
             self.nav_button.setEnabled(False)
 
-        self.canvas.draw_and_sleep()
+        self.canvas.draw_signal.emit()
 
     def set_buttons_during_action(self, state: bool) -> None:
         """
@@ -253,7 +253,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def on_robot_changed(self) -> None:
         """Callback when the currently selected robot changes."""
-        self.canvas.show_objects()
+        self.canvas.show_objects_signal.emit()
         self.update_button_state()
 
     def on_navigate_click(self) -> None:

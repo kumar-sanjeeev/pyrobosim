@@ -324,8 +324,8 @@ class World:
 
         hallway.is_open = True
         if self.has_gui:
-            self.gui.canvas.show_hallways()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_hallways_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def close_hallway(self, hallway, ignore_robots=[]):
@@ -371,8 +371,8 @@ class World:
 
         hallway.is_open = False
         if self.has_gui:
-            self.gui.canvas.show_hallways()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_hallways_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_hallway(self, hallway: Hallway) -> bool:
@@ -501,9 +501,9 @@ class World:
 
         loc.add_graph_nodes()
         if self.has_gui:
-            self.gui.canvas.show_locations()
-            self.gui.canvas.show_objects()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return loc
 
     def update_location(
@@ -562,9 +562,9 @@ class World:
         for spawn in loc.children:
             spawn.set_pose_from_parent()
         if self.has_gui:
-            self.gui.canvas.show_locations()
-            self.gui.canvas.show_objects()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return True
 
     def remove_location(self, loc: Any) -> bool:
@@ -600,9 +600,9 @@ class World:
         for spawn in loc.children:
             self.name_to_entity.pop(spawn.name)
         if self.has_gui:
-            self.gui.canvas.show_locations()
-            self.gui.canvas.show_objects()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return True
 
     def open_location(self, location):
@@ -639,8 +639,8 @@ class World:
         location.is_open = True
         location.update_visualization_polygon()
         if self.has_gui:
-            self.gui.canvas.show_locations()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def close_location(self, location):
@@ -677,8 +677,8 @@ class World:
         location.is_open = False
         location.update_visualization_polygon()
         if self.has_gui:
-            self.gui.canvas.show_locations()
-            self.gui.canvas.draw_and_sleep()
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_location(self, location):
@@ -842,7 +842,7 @@ class World:
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         if self.has_gui:
-            self.gui.canvas.show_objects()
+            self.gui.canvas.show_objects_signal.emit()
         return obj
 
     def update_object(
@@ -918,7 +918,7 @@ class World:
         self.num_objects -= 1
         obj.parent.children.remove(obj)
         if self.has_gui:
-            self.gui.canvas.show_objects()
+            self.gui.canvas.show_objects_signal.emit()
         return True
 
     def remove_all_objects(self, restart_numbering: bool = True) -> None:
@@ -1032,7 +1032,7 @@ class World:
             self.set_inflation_radius(old_inflation_radius)
 
         if self.has_gui:
-            self.gui.canvas.show_robots()
+            self.gui.canvas.show_robots_signal.emit()
         if self.has_ros_node:
             self.ros_node.add_robot_ros_interfaces()
 
@@ -1048,7 +1048,7 @@ class World:
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
             if self.has_gui:
-                self.gui.canvas.show_robots()
+                self.gui.canvas.show_robots_signal.emit()
             if self.has_ros_node:
                 self.ros_node.remove_robot_ros_interfaces(robot)
 
