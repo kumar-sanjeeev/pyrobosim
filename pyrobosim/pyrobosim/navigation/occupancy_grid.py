@@ -12,7 +12,6 @@ from PIL import Image
 
 
 if TYPE_CHECKING:
-    from .occupancy_grid import OccupancyGrid
     from ..core.world import World
 
 
@@ -63,7 +62,7 @@ class OccupancyGrid:
         plt.xticks(x_pos, [f"{p*self.resolution + self.origin[0]:.2}" for p in x_pos])
         y_pos = np.linspace(0, self.height, n_buckets)
         plt.yticks(
-            y_pos, np.flip([f"{p*self.resolution + self.origin[1]:.2}" for p in y_pos])
+            y_pos, np.flip([f"{p*self.resolution + self.origin[1]:.2}" for p in y_pos])  # type: ignore
         )
         plt.show()
 
@@ -177,7 +176,7 @@ class OccupancyGrid:
                 decision += (dy << 1) - (dx << 1)
         return can_connect, last_point
 
-    def save_to_file(self, folder: str, filename: str = "world_map"):
+    def save_to_file(self, folder: str, filename: str = "world_map") -> None:
         """
         Save occupancy grid to PGM and YAML files compatible with ROS tools.
 
@@ -223,7 +222,7 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     @classmethod
-    def from_file(cls, folder: str, filename: Optional[str] = None):
+    def from_file(cls, folder: str, filename: Optional[str] = None) -> "OccupancyGrid":
         """
         Loads an occupancy grid from a folder containing a PGM image file and a YAML file.
 

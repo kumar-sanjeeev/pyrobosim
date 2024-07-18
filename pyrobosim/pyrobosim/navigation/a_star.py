@@ -3,7 +3,8 @@
 import math
 import time
 import warnings
-from typing import Tuple, List
+from typing import Dict, Tuple, Any, List
+
 from astar import AStar
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path, reduce_waypoints_grid
@@ -82,7 +83,7 @@ class AStarGrid(AStar):
 
     def heuristic_cost_estimate(
         self, cell1: Tuple[int, int], cell2: Tuple[int, int]
-    ) -> float:
+    ) -> Any:
         """
         Compute heuristic cost estimate using selected heuristic.
 
@@ -106,7 +107,7 @@ class AStarGrid(AStar):
         x2, y2 = cell2
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-    def neighbors(self, cell: Tuple[int, int]) -> List[Tuple[int, int]]:
+    def neighbors(self, cell: Tuple[int, int]) -> List:
         """
         Get the neighbors of a cell in the grid.
 
@@ -115,8 +116,8 @@ class AStarGrid(AStar):
         """
         neighbours_list = []
         for action in self.selected_actions:
-            dx, dy = self.actions[action]["action"]
-            x, y = cell[0] + dx, cell[1] + dy
+            dx, dy = self.actions[action]["action"]  # type: ignore
+            x, y = cell[0] + dx, cell[1] + dy  # type: ignore
             if not self.grid.is_occupied((x, y)):
                 neighbours_list.append((x, y))
         return neighbours_list
@@ -136,7 +137,7 @@ class AStarGrid(AStar):
 
         # Apply waypoint reduction if enabled.
         if self.compress_path:
-            path = reduce_waypoints_grid(self.grid, list(path))
+            path = reduce_waypoints_grid(self.grid, list(path))  # type: ignore
 
         world_path = []
         if path is not None:
@@ -155,7 +156,7 @@ class AStarGrid(AStar):
 class AstarPlanner(PathPlannerBase):
     """Factory class for A* path planner."""
 
-    def __init__(self, **planner_config: dict) -> None:
+    def __init__(self, **planner_config: Dict) -> None:
         """
         Creates an instance of A* planner.
 
@@ -167,13 +168,13 @@ class AstarPlanner(PathPlannerBase):
 
         # Depending on if grid is provided, select the implementation.
         if planner_config.get("grid", None):
-            self.impl = AStarGrid(**planner_config)
+            self.impl = AStarGrid(**planner_config)  # type:ignore
         else:
             raise NotImplementedError(
                 "A-star does not have a standalone graph based implementation."
             )
 
-    def plan(self, start: Pose, goal: Pose) -> Path:
+    def plan(self, start: Any, goal: Any) -> Path:
         """
         Plans a path from start to goal.
 
@@ -185,6 +186,6 @@ class AstarPlanner(PathPlannerBase):
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         start_time = time.time()
-        self.latest_path = self.impl.plan(start, goal)
+        self.latest_path = self.impl.plan(start, goal)  # type: ignore
         self.planning_time = time.time() - start_time
         return self.latest_path

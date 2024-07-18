@@ -20,13 +20,13 @@ class ConstantVelocityExecutor:
 
     def __init__(
         self,
-        dt=0.1,
-        linear_velocity=1.0,
-        max_angular_velocity=None,
-        validate_during_execution=False,
-        validation_dt=0.5,
-        validation_step_dist=0.025,
-    ):
+        dt: float = 0.1,
+        linear_velocity: float = 1.0,
+        max_angular_velocity: Optional[float] = None,
+        validate_during_execution: bool = False,
+        validation_dt: float = 0.5,
+        validation_step_dist: float = 0.025,
+    ) -> None:
         """
         Creates a constant velocity path executor.
 
@@ -58,7 +58,7 @@ class ConstantVelocityExecutor:
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
-    def execute(self, path: Path, realtime_factor: float = 1.0) -> bool:
+    def execute(self, path: Path, realtime_factor: float = 1.0) -> ExecutionResult:
         """
         Generates and executes a trajectory on the robot.
 
@@ -141,32 +141,32 @@ class ConstantVelocityExecutor:
         self.robot.current_action = None
         return self.robot.last_nav_result
 
-    def validate_remaining_path(self):
+    def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
 
         This function will set the `abort_execution` attribute to `True`,
         which cancels the main trajectory execution loop.
         """
-        while self.robot.executing_nav and not self.abort_execution:
+        while self.robot.executing_nav and not self.abort_execution:  # type: ignore
             start_time = time.time()
-            cur_pose = self.robot.get_pose()
+            cur_pose = self.robot.get_pose()  # type: ignore
             cur_time = self.current_traj_time
 
             # Get the waypoint index of the remaining path.
-            for idx, t in enumerate(self.traj.t_pts):
+            for idx, t in enumerate(self.traj.t_pts):  # type: ignore
                 if t >= cur_time:
                     break
-            if idx == self.traj.num_points() - 1:
+            if idx == self.traj.num_points() - 1:  # type:ignore
                 return
 
             # Collision check the remaining path.
             poses = [cur_pose]
-            poses.extend(self.traj.poses[idx:])
+            poses.extend(self.traj.poses[idx:])  # type: ignore
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
                 if not remaining_path.is_collision_free(
-                    self.robot.world, step_dist=self.validation_step_dist
+                    self.robot.world, step_dist=self.validation_step_dist  # type:ignore
                 ):
                     warnings.warn("Remaining path is in collision. Aborting execution.")
                     self.abort_execution = True

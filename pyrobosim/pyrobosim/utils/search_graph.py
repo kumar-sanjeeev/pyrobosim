@@ -53,14 +53,14 @@ class SearchGraph:
 
     def __init__(
         self,
-        color: List[int] = [0, 0, 0],
+        color: List[float] = [0, 0, 0],
         color_alpha: float = 0.5,
         use_planner: bool = False,
     ) -> None:
         """
         Creates an instance of SearchGraph.
         :param color: The display color for the graph.
-        :type param: Integer List [R, G, B]
+        :type param: Float List [R, G, B]
         :param color_alpha: The intensity of the color.
         :type color_alpha: float
         :param use_planner: If true, the graph will create a planner for path finding.

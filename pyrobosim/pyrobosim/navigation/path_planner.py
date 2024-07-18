@@ -1,7 +1,7 @@
 """ Implementation of the generic path planner. """
 
 import warnings
-from typing import Optional
+from typing import Optional, Dict
 import matplotlib.axes
 
 from pyrobosim.navigation.a_star import AstarPlanner
@@ -17,7 +17,7 @@ class PathPlanner:
     Creates a path planner.
     """
 
-    def __init__(self, planner_type: str, **planner_config: dict) -> None:
+    def __init__(self, planner_type: str, **planner_config: Dict) -> None:
         """
         Creates a PathPlanner instance of given type and configuration
 
@@ -72,7 +72,7 @@ class PathPlanner:
         axes: matplotlib.axes.Axes,
         path: Optional[Path] = None,
         path_color: str = "m",
-    ) -> None:
+    ) -> Dict:
         """
         Plots the planned path on a specified set of axes.
 

@@ -1,6 +1,6 @@
 """ Specification of the interface that all planners must implement. """
 
-from typing import Union, Optional
+from typing import Union, Optional, List, Dict
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
@@ -20,7 +20,7 @@ class PathPlannerBase:
         self.start = None
         self.impl = None
         self.planning_time = 0.0
-        self.graphs = []
+        self.graphs: List = []
         self.graphs_updated = False
         self.latest_path = Path()
 
@@ -63,11 +63,11 @@ class PathPlannerBase:
 
     def plot(
         self,
-        axes: plt.axes,
+        axes,
         show_graph: bool = True,
         path: Optional[Path] = None,
         path_color: str = "m",
-    ) -> None:
+    ) -> Dict:
         """
         Plots the planned path on a specified set of axes.
 
@@ -77,13 +77,13 @@ class PathPlannerBase:
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param path_color: Color of the path, as an RGB tuple or string.
         :type path_color: tuple[float] / str, optional
-        :return: List of Matplotlib artists containing what was drawn,
+        :return: Dict of Matplotlib artists containing what was drawn,
             used for bookkeeping.
-        :rtype: list[:class:`matplotlib.artist.Artist`]
+        :rtype: Dict[str, :class:`matplotlib.artist.Artist`]
         """
 
         graph_artists = []
-        path_artists = []
+        path_artists: List = []
         artists = {}
 
         if not path:
