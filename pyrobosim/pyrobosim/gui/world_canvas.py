@@ -1,7 +1,7 @@
 """ Utilities for displaying a pyrobosim world in a figure canvas. """
 
-from typing import Optional, Union, TYPE_CHECKING
-import adjustText
+from typing import Optional, Union, TYPE_CHECKING, List, Dict
+import adjustText  # type: ignore
 import numpy as np
 import time
 import threading
@@ -63,7 +63,7 @@ class NavRunner(QRunnable):
             return
 
         # Find a path, or use an existing one, and start the navigation thread.
-        robot.navigate(
+        robot.navigate(  # type: ignore
             goal=self.goal,
             path=self.path,
             use_thread=True,
@@ -150,15 +150,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.animation_dt = animation_dt
         self.realtime_factor = realtime_factor
 
-        self.robot_bodies = []
-        self.robot_dirs = []
-        self.robot_lengths = []
-        self.obj_patches = []
-        self.obj_texts = []
-        self.hallway_patches = []
-        self.location_patches = []
-        self.location_texts = []
-        self.path_planner_artists = {"graph": [], "path": []}
+        self.robot_bodies: List = []
+        self.robot_dirs: List = []
+        self.robot_lengths: List = []
+        self.obj_patches: List = []
+        self.obj_texts: List = []
+        self.hallway_patches: List = []
+        self.location_patches: List = []
+        self.location_texts: List = []
+        self.path_planner_artists: Dict = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
@@ -195,7 +195,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
             for i, robot in enumerate(self.world.robots):
                 p = robot.get_pose()
-                self.robot_bodies[i] = Circle(
+                self.robot_bodies[i] = Circle(  # type: ignore
                     (p.x, p.y),
                     radius=robot.radius,
                     edgecolor=robot.color,
@@ -203,10 +203,10 @@ class WorldCanvas(FigureCanvasQTAgg):
                     linewidth=2,
                     zorder=self.robot_zorder,
                 )
-                self.axes.add_patch(self.robot_bodies[i])
+                self.axes.add_patch(self.robot_bodies[i])  # type: ignore
 
                 robot_length = self.robot_dir_line_factor * robot.radius
-                (self.robot_dirs[i],) = self.axes.plot(
+                (self.robot_dirs[i],) = self.axes.plot(  # type: ignore
                     p.x + np.array([0, robot_length * np.cos(p.get_yaw())]),
                     p.y + np.array([0, robot_length * np.sin(p.get_yaw())]),
                     linestyle="-",
@@ -373,7 +373,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 color = robot.color if robot is not None else "m"
                 if robot.path_planner:
                     path_planner_artists = robot.path_planner.plot(
-                        self.axes, path=path, path_color=color
+                        self.axes, path=path, path_color=color  # type: ignore
                     )
 
                     for artist in self.path_planner_artists["graph"]:
@@ -469,12 +469,12 @@ class WorldCanvas(FigureCanvasQTAgg):
             .rotate(obj.pose.get_yaw())
             .translate(obj.pose.x, obj.pose.y)
         )
-        obj.viz_patch.set_transform(tf + self.axes.transData)
+        obj.viz_patch.set_transform(tf + self.axes.transData)  # type: ignore
 
         xmin, ymin, xmax, ymax = obj.polygon.bounds
         x = obj.pose.x + 1.0 * (xmax - xmin)
         y = obj.pose.y + 1.0 * (ymax - ymin)
-        obj.viz_text.set_position((x, y))
+        obj.viz_text.set_position((x, y))  # type: ignore
 
     def navigate(
         self, robot: Union[Robot, str], goal: str, path: Optional[Path] = None
@@ -512,7 +512,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         success = robot.pick_object(obj_name, grasp_pose)
         if success:
-            self.update_object_plot(robot.manipulated_object)
+            self.update_object_plot(robot.manipulated_object)  # type: ignore
             self.show_world_state(robot)
             self.draw_signal.emit()
         return success
@@ -533,7 +533,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         obj = robot.manipulated_object
         if obj is None:
-            return
+            return  # type: ignore
         self.obj_patches.remove(obj.viz_patch)
         obj.viz_patch.remove()
         success = robot.place_object(pose=pose)
@@ -576,7 +576,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         return robot.open_location()
 
-    def close_location(self, robot: Optional[Robot]) -> None:
+    def close_location(self, robot: Optional[Robot]) -> bool:
         """
         Closes the robot's current location, if available.
 

@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from PySide6 import QtWidgets
 from PySide6.QtGui import QFont, QScreen
-from matplotlib.backends.qt_compat import QtCore
+from matplotlib.backends.qt_compat import QtCore  # type: ignore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from .world_canvas import WorldCanvas
@@ -175,7 +175,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def get_current_robot(self) -> Robot:
         robot_name = self.robot_textbox.currentText()
-        return self.world.get_robot_by_name(robot_name)
+        return self.world.get_robot_by_name(robot_name)  # type: ignore
 
     ####################
     # State Management #
@@ -184,7 +184,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
         if robot:
-            at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
+            at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open  # type: ignore
             can_pick = robot.manipulated_object is None
             can_open_close = robot.at_openable_location() and can_pick
 
@@ -192,8 +192,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.pick_button.setEnabled(can_pick and at_open_object_spawn)
             self.place_button.setEnabled((not can_pick) and at_open_object_spawn)
             self.detect_button.setEnabled(at_open_object_spawn)
-            self.open_button.setEnabled(can_open_close and not robot.location.is_open)
-            self.close_button.setEnabled(can_open_close and robot.location.is_open)
+            self.open_button.setEnabled(can_open_close and not robot.location.is_open)  # type: ignore
+            self.close_button.setEnabled(can_open_close and robot.location.is_open)  # type: ignore
 
             self.canvas.show_world_state(robot, navigating=False)
         else:
@@ -273,7 +273,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if not loc:
             return
 
-        print(f"[{robot.name}] Navigating to {loc}")
+        print(f"[{robot.name}] Navigating to {loc}")  # type: ignore
         self.canvas.navigate(robot, loc)
 
     def on_pick_click(self) -> None:
