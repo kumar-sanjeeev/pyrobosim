@@ -2,8 +2,9 @@
 
 import copy
 import numpy as np
-from scipy.spatial.transform import Slerp, Rotation
+from scipy.spatial.transform import Slerp, Rotation  # type: ignore
 import warnings
+from typing import List, Union, Optional
 
 from .pose import Pose, wrap_angle
 
@@ -13,9 +14,9 @@ class Trajectory:
 
     def __init__(
         self,
-        t_pts=[],
-        poses=[],
-    ):
+        t_pts: Union[List[float], np.ndarray] = [],
+        poses: List = [],
+    ) -> None:
         """
         Creates a Trajectory object instance.
 
@@ -29,10 +30,14 @@ class Trajectory:
                 "Time points and poses must have the same number of elements."
             )
 
-        self.t_pts = np.array(t_pts)
+        if isinstance(t_pts, List):
+            self.t_pts = np.array(t_pts)
+        elif isinstance(t_pts, np.ndarray):
+            self.t_pts = t_pts
+
         self.poses = np.array(poses)
 
-    def num_points(self):
+    def num_points(self) -> int:
         """
         Returns the number of points in a trajectory.
 
@@ -41,7 +46,7 @@ class Trajectory:
         """
         return len(self.t_pts)
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """
         Checks whether a trajectory is empty.
 
@@ -50,7 +55,7 @@ class Trajectory:
         """
         return self.num_points() == 0
 
-    def delete(self, idx):
+    def delete(self, idx: int) -> bool:
         """
         Deletes a trajectory point at the specified index.
 
@@ -73,7 +78,9 @@ class Trajectory:
             return True
 
 
-def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
+def get_constant_speed_trajectory(
+    path, linear_velocity: float = 0.2, max_angular_velocity: Optional[float] = None
+) -> Optional[Trajectory]:
     """
     Gets a trajectory from a path (list of Pose objects) by calculating
     time points based on constant velocity and maximum angular velocity.
@@ -103,13 +110,13 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
             ang_time = 0
         else:
             ang_distance = wrap_angle(end_pose.get_yaw() - start_pose.get_yaw())
-            ang_time = ang_distance / max_angular_velocity
+            ang_time = ang_distance / max_angular_velocity  # type: ignore
         t_pts[idx + 1] = t_pts[idx] + max(lin_time, ang_time)
 
     return Trajectory(t_pts, path.poses)
 
 
-def interpolate_trajectory(traj: Trajectory, dt: float):
+def interpolate_trajectory(traj: Trajectory, dt: float) -> Optional[Trajectory]:
     """
     Interpolates a trajectory given a time step `dt`.
     Positions are interpolated linearly and the angle is interpolated
