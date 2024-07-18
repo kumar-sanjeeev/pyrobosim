@@ -3,13 +3,17 @@ Default mappings for PDDLStream functions, streams, and certificate tests that r
 Task and Motion Planning for pick-and-place applications with a mobile manipulator.
 """
 
-from pddlstream.language.stream import StreamInfo
-from pddlstream.language.generator import from_gen_fn, from_list_fn, from_test
+from typing import Callable, Dict
+
+from pddlstream.language.stream import StreamInfo  # type: ignore
+from pddlstream.language.generator import from_gen_fn, from_list_fn, from_test  # type: ignore
 
 from . import primitives
+from ...core.world import World
+from ...core.robot import Robot
 
 
-def get_stream_map(world, robot):
+def get_stream_map(world: World, robot: Robot) -> Dict[str, Callable]:
     """
     Returns a dictionary mapping stream names to function implementations.
 
@@ -37,7 +41,7 @@ def get_stream_map(world, robot):
         ),
         "s-grasp": from_gen_fn(
             lambda obj, p_obj, p_robot: primitives.sample_grasp_pose(
-                grasp_gen,
+                grasp_gen,  # type: ignore
                 obj,
                 p_obj,
                 p_robot,
@@ -58,7 +62,7 @@ def get_stream_map(world, robot):
     }
 
 
-def get_stream_info():
+def get_stream_info() -> Dict[str, StreamInfo]:
     """
     Returns a dictionary from stream name to StreamInfo altering how
     individual streams are handled.

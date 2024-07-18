@@ -3,15 +3,18 @@ Utilities to connect world models with PDDLStream.
 """
 
 import os
+from typing import Callable, List, Tuple, Any, Optional
 
 from ..actions import TaskAction, TaskPlan
 from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
 from ...utils.motion import Path
 from ...utils.pose import Pose
+from ...core.world import World
+from ...core.robot import Robot
 
 
-def get_default_domains_folder():
+def get_default_domains_folder() -> str:
     """
     Returns the default path to the folder containing PDDLStream domains.
 
@@ -21,7 +24,7 @@ def get_default_domains_folder():
     return os.path.join(get_data_folder(), "pddlstream", "domains")
 
 
-def get_default_stream_info_fn():
+def get_default_stream_info_fn() -> Callable:
     """
     Gets a function that creates the default PDDLStream stream information dictionary.
 
@@ -33,7 +36,7 @@ def get_default_stream_info_fn():
     return get_stream_info
 
 
-def get_default_stream_map_fn():
+def get_default_stream_map_fn() -> Callable:
     """
     Gets a function that creates the default PDDLStream stream mappings dictionary
     given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
@@ -46,7 +49,7 @@ def get_default_stream_map_fn():
     return get_stream_map
 
 
-def world_to_pddlstream_init(world, robot):
+def world_to_pddlstream_init(world: World, robot: Robot) -> List[Tuple]:
     """
     Converts a world representation object to a PDDLStream compatible
     initial condition specification.
@@ -109,7 +112,7 @@ def world_to_pddlstream_init(world, robot):
     return init
 
 
-def process_goal_specification(goal_literals, world):
+def process_goal_specification(goal_literals: List, world: World) -> None:
     """
     Processes and validates a goal specification for planning.
 
@@ -126,7 +129,9 @@ def process_goal_specification(goal_literals, world):
                     replace_goal_literal_tuple(goal_literals, i, j, entity)
 
 
-def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
+def replace_goal_literal_tuple(
+    goal_literals: List[Tuple], literal_idx: int, arg_idx: int, new_val: Any
+) -> None:
     """
     Utility function to replace the element of a goal literal tuple in place.
 
@@ -144,7 +149,7 @@ def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
     goal_literals[literal_idx] = tuple(literal_copy)
 
 
-def pddlstream_solution_to_plan(solution, robot):
+def pddlstream_solution_to_plan(solution: List, robot: str) -> Optional[TaskPlan]:
     """
     Converts the output plan of a PDDLStream solution to a plan
     list compatible with plan execution infrastructure.

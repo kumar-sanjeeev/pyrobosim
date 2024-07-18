@@ -3,14 +3,21 @@
 from enum import IntEnum
 import numpy as np
 import time
+from typing import Optional, List
 
 from ..utils.motion import Path
+from ..utils.pose import Pose
 
 
 class ExecutionOptions:
     """Options for executing actions in simulation."""
 
-    def __init__(self, delay=0.0, success_probability=1.0, rng_seed=None):
+    def __init__(
+        self,
+        delay: float = 0.0,
+        success_probability: float = 1.0,
+        rng_seed: Optional[int] = None,
+    ) -> None:
         """
         Creates a new set of action execution options.
 
@@ -59,7 +66,11 @@ class ExecutionStatus(IntEnum):
 class ExecutionResult:
     """Contains the result of executing actions or plans."""
 
-    def __init__(self, status=ExecutionStatus.UNKNOWN, message=None):
+    def __init__(
+        self,
+        status: ExecutionStatus = ExecutionStatus.UNKNOWN,
+        message: Optional[str] = None,
+    ) -> None:
         """
         Creates a new execution result instance.
 
@@ -71,7 +82,7 @@ class ExecutionResult:
         self.status = status
         self.message = message
 
-    def is_success(self):
+    def is_success(self) -> bool:
         """
         Helper function to determine if an execution result is successful.
 
@@ -80,7 +91,7 @@ class ExecutionResult:
         """
         return self.status == ExecutionStatus.SUCCESS
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Execution result with status: {self.status.name}"
 
@@ -91,16 +102,16 @@ class TaskAction:
     def __init__(
         self,
         type,
-        robot=None,
-        object=None,
-        room=None,
-        source_location=None,
-        target_location=None,
-        pose=None,
-        path=Path(),
-        cost=None,
-        execution_options=None,
-    ):
+        robot: Optional[str] = None,
+        object: Optional[str] = None,
+        room: Optional[str] = None,
+        source_location: Optional[str] = None,
+        target_location: Optional[str] = None,
+        pose: Optional[Pose] = None,
+        path: Path = Path(),
+        cost: Optional[float] = None,
+        execution_options: Optional[ExecutionOptions] = None,
+    ) -> None:
         """
         Creates a new task action representation.
 
@@ -139,7 +150,7 @@ class TaskAction:
         self.pose = pose  # Target pose
         self.path = path  # Path object containing a list of poses
 
-    def should_succeed(self):
+    def should_succeed(self) -> bool:
         """
         Determines whether the action should succeed, while simulating other aspects such as delays.
 
@@ -154,7 +165,7 @@ class TaskAction:
             )
         return True
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string describing an action."""
         # Include the robot name if any.
         if self.robot is not None:
@@ -232,7 +243,9 @@ class TaskPlan:
     (:class:`pyrobosim.planning.actions.TaskAction`).
     """
 
-    def __init__(self, robot=None, actions=[]):
+    def __init__(
+        self, robot: Optional[str] = None, actions: List[TaskAction] = []
+    ) -> None:
         """
         Creates a new task plan.
 
@@ -244,7 +257,7 @@ class TaskPlan:
         self.robot = robot
         self.set_actions(actions)
 
-    def set_actions(self, actions):
+    def set_actions(self, actions: List[TaskAction]) -> None:
         """
         Sets actions and updates the total cost over all the actions.
         Use this method rather than directly setting the actions variable.
@@ -255,7 +268,7 @@ class TaskPlan:
         self.actions = actions
         self.total_cost = sum([a.cost for a in self.actions if a.cost is not None])
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the total number of actions comprising this task plan.
 
@@ -264,7 +277,7 @@ class TaskPlan:
         """
         return len(self.actions)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string describing a task plan."""
         # Check for empty plan
         if len(self.actions) == 0:

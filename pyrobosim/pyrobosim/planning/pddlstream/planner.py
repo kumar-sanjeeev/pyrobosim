@@ -1,10 +1,15 @@
 """ Task and Motion Planning tools using PDDLStream. """
 
 import os
-from pddlstream.algorithms.focused import solve_adaptive
-from pddlstream.language.constants import And, PDDLProblem
-from pddlstream.utils import read
+from typing import Callable, List, Tuple, Dict, Optional
 
+from pddlstream.algorithms.focused import solve_adaptive  # type: ignore
+from pddlstream.language.constants import And, PDDLProblem  # type: ignore
+from pddlstream.utils import read  # type: ignore
+
+from ...core.world import World
+from ...core.robot import Robot
+from ...planning.actions import TaskPlan
 from .utils import (
     get_default_stream_info_fn,
     get_default_stream_map_fn,
@@ -19,11 +24,11 @@ class PDDLStreamPlanner:
 
     def __init__(
         self,
-        world,
-        domain_folder,
-        stream_map_fn=get_default_stream_map_fn(),
-        stream_info_fn=get_default_stream_info_fn(),
-    ):
+        world: World,
+        domain_folder: str,
+        stream_map_fn: Callable = get_default_stream_map_fn(),
+        stream_info_fn: Callable = get_default_stream_info_fn(),
+    ) -> None:
         """
         Creates a new PDDLStream based planner.
 
@@ -53,13 +58,13 @@ class PDDLStreamPlanner:
 
     def plan(
         self,
-        robot,
-        goal_literals,
-        max_attempts=1,
-        verbose=False,
-        **planner_config,
-    ):
-        r"""
+        robot: Robot,
+        goal_literals: List[Tuple],
+        max_attempts: int = 1,
+        verbose: bool = False,
+        **planner_config: Dict,
+    ) -> Optional[TaskPlan]:
+        """
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.
         This uses the "adaptive" planner in PDDLStream, which demonstrates the best performance
@@ -87,7 +92,7 @@ class PDDLStreamPlanner:
         # The ``get_stream_map()`` function comes from the ``mappings.py``
         # file, so as you add new functionality you should fill it out there.
         external_pddl = [self.stream_pddl]
-        constant_map = {}
+        constant_map: Dict = {}
         prob = PDDLProblem(
             self.domain_pddl,
             constant_map,
@@ -114,10 +119,10 @@ class PDDLStreamPlanner:
                 break
 
         # Convert the solution to a TaskPlan object.
-        self.latest_plan = plan_out
+        self.latest_plan = plan_out  # type: ignore
         if verbose:
             print("\nInitial conditions:")
-            for i in init:
+            for i in init:  # type: ignore
                 print(f"\t{i}")
             print("\nGoal Specification:")
             for g in goal_literals:

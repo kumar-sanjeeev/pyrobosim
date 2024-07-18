@@ -3,13 +3,18 @@ Helper primitives for PDDLStream based planning.
 """
 
 import numpy as np
+from typing import Optional, List, Tuple, Generator
 
-from ...manipulation.grasping import GraspFace
+from ...navigation.path_planner import PathPlanner
+from ...manipulation.grasping import GraspFace, Grasp, GraspGenerator
 from ...utils.pose import Pose
 from ...utils.polygon import sample_from_polygon, transform_polygon
+from ...utils.motion import Path
+from ...core.locations import Location
+from ...core.objects import Object
 
 
-def get_pick_place_cost(loc, obj):
+def get_pick_place_cost(loc: Location, obj: Object) -> float:
     """
     Estimates a dummy pick / place cost for a specific location / object
     combination, which a constant value plus the height of the location and
@@ -25,7 +30,7 @@ def get_pick_place_cost(loc, obj):
     return 0.5 + loc.height + (0.5 * obj.height)
 
 
-def get_pick_place_at_pose_cost(loc, obj, p, pr):
+def get_pick_place_at_pose_cost(loc: Location, obj: Object, p: Pose, pr: Pose) -> float:
     """
     Estimates a dummy pick / place cost for a specific location / object
     combination, given the pose of the object and the robot.
@@ -44,7 +49,7 @@ def get_pick_place_at_pose_cost(loc, obj, p, pr):
     return p.get_linear_distance(pr) + get_pick_place_cost(loc, obj)
 
 
-def get_grasp_at_pose_cost(g, pr):
+def get_grasp_at_pose_cost(g: Grasp, pr: Pose) -> float:
     """
     Estimates the cost of grasping a specific object,
     given the grasp properties and the pose of the robot.
@@ -57,7 +62,7 @@ def get_grasp_at_pose_cost(g, pr):
     :rtype: float
     """
     # Define cost for distance between robot and grasp pose
-    distance_cost = g.origin_wrt_world.get_linear_distance(pr)
+    distance_cost = g.origin_wrt_world.get_linear_distance(pr)  # type: ignore
 
     # Define dummy costs for types of grasps
     if g.face == GraspFace.TOP:
@@ -70,7 +75,7 @@ def get_grasp_at_pose_cost(g, pr):
     return distance_cost + face_cost
 
 
-def get_straight_line_distance(l1, l2):
+def get_straight_line_distance(l1: Location, l2: Location) -> float:
     """
     Optimistically estimate the distance between two locations by getting the
     minimum straight-line distance between any two navigation poses.
@@ -91,7 +96,7 @@ def get_straight_line_distance(l1, l2):
     return min_dist
 
 
-def get_nav_poses(loc):
+def get_nav_poses(loc: Location) -> List[Tuple]:
     """
     Gets a finite list of navigation poses for a specific location.
 
@@ -103,7 +108,7 @@ def get_nav_poses(loc):
     return [(p,) for p in loc.nav_poses]
 
 
-def get_path_length(path):
+def get_path_length(path: Path) -> float:
     """
     Simple wrapper to get the length of a path.
 
@@ -115,7 +120,9 @@ def get_path_length(path):
     return path.length
 
 
-def sample_motion(planner, p1, p2):
+def sample_motion(
+    planner: PathPlanner, p1: Pose, p2: Pose
+) -> Generator[Tuple[Path], None, None]:
     """
     Samples a feasible motion plan from a start to a goal pose.
 
@@ -136,14 +143,14 @@ def sample_motion(planner, p1, p2):
 
 
 def sample_grasp_pose(
-    grasp_gen,
-    obj,
-    p_obj,
-    p_robot,
-    front_grasps=True,
-    top_grasps=True,
-    side_grasps=False,
-):
+    grasp_gen: GraspGenerator,
+    obj: Object,
+    p_obj: Pose,
+    p_robot: Pose,
+    front_grasps: bool = True,
+    top_grasps: bool = True,
+    side_grasps: bool = False,
+) -> Generator[Tuple[Grasp], None, None]:
     """
     Samples feasible grasps for an object given its pose and the relative robot pose.
 
@@ -186,7 +193,9 @@ def sample_grasp_pose(
         yield (g,)
 
 
-def sample_place_pose(loc, obj, max_tries=100):
+def sample_place_pose(
+    loc: Location, obj: Object, max_tries: int = 100
+) -> Generator[Tuple[Pose], None, None]:
     """
     Samples a feasible placement pose for an object at a specific location.
 
@@ -220,7 +229,7 @@ def sample_place_pose(loc, obj, max_tries=100):
         yield (pose_sample,)
 
 
-def test_collision_free(o1, p1, o2, p2):
+def test_collision_free(o1: Object, p1: Pose, o2: Object, p2: Pose) -> bool:
     """
     Test for collisions between two objects at specified poses.
 
