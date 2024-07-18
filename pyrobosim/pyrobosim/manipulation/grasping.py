@@ -1,13 +1,13 @@
 """ Grasping utilities. """
 
-from typing import Optional, List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import List, Optional, Any, Tuple
 
 from enum import Enum
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from transforms3d.quaternions import rotate_vector, qinverse
+from mpl_toolkits.mplot3d import Axes3D  # type: ignore
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection  # type: ignore
+from transforms3d.quaternions import rotate_vector, qinverse  # type: ignore
 
 from ..utils.pose import Pose
 
@@ -68,8 +68,8 @@ class Grasp:
         properties: "ParallelGraspProperties",
         origin_wrt_object: Pose,
         origin_wrt_world: Optional[Pose] = None,
-        face: "GraspFace" = GraspFace.UNKNOWN,
-        direction: "GraspDirection" = GraspDirection.UNKNOWN,
+        face: GraspFace = GraspFace.UNKNOWN,
+        direction: GraspDirection = GraspDirection.UNKNOWN,
     ) -> None:
         """
         Creates a grasp object instance.
@@ -106,7 +106,7 @@ class Grasp:
             self.origin_wrt_object.z + vec[2],
         ]
 
-    def plot(self, ax: plt.axes, color: str, alpha: float = 0.8) -> None:
+    def plot(self, ax, color: Any, alpha: float = 0.8) -> Any:
         """Displays the grasp on an existing set of axes."""
         d = self.properties.depth
         h = self.properties.height / 2
@@ -267,7 +267,7 @@ class GraspGenerator:
         ]
         max_dot_prod = -10  # Unrealistic value for dot product
         for face in all_grasp_faces:
-            dot_prod = np.dot(v_robot_rt_object_proj, normal_from_face[face])
+            dot_prod = np.dot(v_robot_rt_object_proj, normal_from_face[face])  # type: ignore
             if dot_prod > max_dot_prod:
                 max_dot_prod = dot_prod
                 front_face_dir = face
@@ -278,15 +278,15 @@ class GraspGenerator:
         ).T
         max_dot_prod = -10  # Unrealistic value for dot product
         for face in all_grasp_faces:
-            dot_prod = np.dot(unit_z, normal_from_face[face])
+            dot_prod = np.dot(unit_z, normal_from_face[face])  # type: ignore
             if dot_prod > max_dot_prod:
                 max_dot_prod = dot_prod
                 top_face_dir = face
 
         # Compute the transform from nominal coordinates to robot-facing
-        x_vec = -1.0 * normal_from_face[front_face_dir]
+        x_vec = -1.0 * normal_from_face[front_face_dir]  # type: ignore
         z_vec = normal_from_face[top_face_dir]
-        y_vec = np.cross(-1.0 * x_vec, z_vec)
+        y_vec = np.cross(-1.0 * x_vec, z_vec)  # type: ignore
         rot_matrix[:, 0] = x_vec
         rot_matrix[:, 1] = y_vec
         rot_matrix[:, 2] = z_vec
@@ -410,10 +410,10 @@ class GraspGenerator:
         """
         grasps = []
         rot_matrix = self.compute_robot_facing_rot(object_pose, robot_pose)
-        front_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.FRONT])
-        top_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.TOP])
-        left_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.LEFT])
-        right_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.RIGHT])
+        front_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.FRONT])  # type: ignore
+        top_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.TOP])  # type: ignore
+        left_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.LEFT])  # type: ignore
+        right_face_vec = np.dot(rot_matrix, normal_from_face[GraspFace.RIGHT])  # type: ignore
 
         # Unpack useful variables
         object_x, object_y, object_z = object_dims
@@ -431,7 +431,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.X_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             x = min(0.0, effective_depth - object_x / 2)
@@ -453,7 +453,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.X_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             x = max(0.0, object_x / 2 - effective_depth)
@@ -475,7 +475,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Z_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             z = min(0.0, effective_depth - object_z / 2)
@@ -497,7 +497,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Z_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             z = max(0.0, object_z / 2 - effective_depth)
@@ -519,7 +519,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Y_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             y = min(0.0, effective_depth - object_y / 2)
@@ -541,7 +541,7 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Y_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]  # type: ignore
         )
         if try_grasp:
             y = max(0.0, object_y / 2 - effective_depth)
@@ -567,7 +567,7 @@ class GraspGenerator:
         object_pose: Pose = Pose(),
         robot_pose: Optional[Pose] = None,
         object_footprint: Optional[np.ndarray] = None,
-    ) -> None:
+    ):
         """
         Display the grasps on top of an object.
 
@@ -629,7 +629,7 @@ class GraspGenerator:
             xo = grasp.origin_wrt_object.x
             yo = grasp.origin_wrt_object.y
             zo = grasp.origin_wrt_object.z
-            xd, yd, zd = normal_from_face[grasp.face]
+            xd, yd, zd = normal_from_face[grasp.face]  # type: ignore
             depth = grasp.properties.depth
 
             # Plot the grasp point
