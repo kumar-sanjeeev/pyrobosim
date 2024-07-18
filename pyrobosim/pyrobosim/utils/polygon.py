@@ -63,10 +63,10 @@ def box_to_coords(
     x, y = origin
     w, h = dims
     coords = [
-        rot2d((-0.5 * w, -0.5 * h), ang),
-        rot2d((0.5 * w, -0.5 * h), ang),
-        rot2d((0.5 * w, 0.5 * h), ang),
-        rot2d((-0.5 * w, 0.5 * h), ang),
+        rot2d((-0.5 * w, -0.5 * h), ang),  # type: ignore
+        rot2d((0.5 * w, -0.5 * h), ang),  # type: ignore
+        rot2d((0.5 * w, 0.5 * h), ang),  # type: ignore
+        rot2d((-0.5 * w, 0.5 * h), ang),  # type: ignore
     ]
     coords.append(coords[0])
     coords = add_coords(coords, (x, y))
