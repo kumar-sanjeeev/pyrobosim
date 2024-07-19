@@ -291,7 +291,7 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def open_hallway(self, hallway: Hallway) -> bool:
+    def open_hallway(self, hallway: Hallway) -> ExecutionResult:
         """
         Opens a hallway between two rooms.
 
@@ -328,7 +328,9 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_hallway(self, hallway, ignore_robots=[]):
+    def close_hallway(
+        self, hallway: Hallway, ignore_robots: List = []
+    ) -> ExecutionResult:
         """
         Close a hallway between two rooms.
 
@@ -375,7 +377,7 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def lock_hallway(self, hallway: Hallway) -> bool:
+    def lock_hallway(self, hallway: Hallway) -> ExecutionResult:
         """
         Locks a hallway between two rooms.
 
@@ -402,7 +404,7 @@ class World:
         hallway.is_locked = True
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def unlock_hallway(self, hallway: Hallway) -> bool:
+    def unlock_hallway(self, hallway: Hallway) -> ExecutionResult:
         """
         Unlocks a hallway between two rooms.
 
@@ -605,7 +607,7 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return True
 
-    def open_location(self, location):
+    def open_location(self, location: Location) -> ExecutionResult:
         """
         Opens a storage location.
 
@@ -643,7 +645,7 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_location(self, location):
+    def close_location(self, location: Location) -> ExecutionResult:
         """
         Close a storage location.
 
@@ -681,7 +683,7 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def lock_location(self, location):
+    def lock_location(self, location: Location) -> ExecutionResult:
         """
         Locks a storage location.
 
@@ -708,7 +710,7 @@ class World:
         location.is_locked = True
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def unlock_location(self, location):
+    def unlock_location(self, location: Location) -> ExecutionResult:
         """
         Unlocks a storage location.
 
@@ -804,7 +806,7 @@ class World:
             for _ in range(self.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
-                pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
+                pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)  # type: ignore
                 poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
 
                 is_valid_pose = poly.within(obj_spawn.polygon)
@@ -888,7 +890,7 @@ class World:
                 )
                 return False
 
-            obj.parent.children.remove(obj)
+            obj.parent.children.remove(obj)  # type: ignore
             obj.parent = obj_spawn
             obj_spawn.children.append(obj)
 
@@ -1000,7 +1002,7 @@ class World:
                         warnings.warn(f"Could not sample pose in {loc.name}.")
                         valid_pose = False
                     yaw_sample = np.random.uniform(-np.pi, np.pi)
-                    robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
+                    robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)  # type: ignore
                 else:
                     # Validate that the pose is unoccupied and in the right location
                     if not loc.is_collision_free(pose):
@@ -1024,7 +1026,7 @@ class World:
         if valid_pose:
             robot.location = loc
             robot.set_pose(robot_pose)
-            robot.world = self
+            robot.world = self  # type: ignore
             self.robots.append(robot)
             self.name_to_entity[robot.name] = robot
         else:
@@ -1552,7 +1554,7 @@ class World:
 
     def graph_node_from_entity(
         self, entity_query, resolution_strategy="nearest", robot=None
-    ):
+    ) -> Optional[Node]:
         """
         Gets a graph node from an entity query, which could be any combination of
         room, hallway, location, object spawn, or object in the world, as well as
@@ -1597,7 +1599,7 @@ class World:
         elif isinstance(entity, Hallway):
             graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
         elif isinstance(entity, Object):
-            graph_nodes = entity.parent.graph_nodes
+            graph_nodes = entity.parent.graph_nodes  # type: ignore
         elif isinstance(entity, Location):
             graph_nodes = entity.children[0].graph_nodes
         else:

@@ -4,7 +4,7 @@ import numpy as np
 import os
 import warnings
 import yaml
-from typing import Optional
+from typing import Optional, Dict
 
 from .robot import Robot
 from .world import World
@@ -16,6 +16,7 @@ from ..navigation import (
     OccupancyGrid,
     PathPlanner,
 )
+from ..navigation.planner_base import PathPlannerBase
 
 
 class WorldYamlLoader:
@@ -127,7 +128,7 @@ class WorldYamlLoader:
                 max_angular_acceleration=robot_data.get(
                     "max_angular_acceleration", np.inf
                 ),
-                path_planner=self.get_local_path_planner(robot_data),
+                path_planner=self.get_local_path_planner(robot_data),  # type: ignore
                 path_executor=self.get_path_executor(robot_data),
                 grasp_generator=self.get_grasp_generator(robot_data),
                 partial_observability=robot_data.get("partial_observability", False),
@@ -142,7 +143,7 @@ class WorldYamlLoader:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
 
-    def get_local_path_planner(self, robot_data: dict) -> Optional[PathPlanner]:
+    def get_local_path_planner(self, robot_data: Dict) -> Optional[PathPlanner]:
         """Gets local planner path planner to a robot."""
         if "path_planner" not in robot_data:
             return None
@@ -168,7 +169,7 @@ class WorldYamlLoader:
 
         return path_planner
 
-    def get_path_executor(self, robot_data: dict) -> Optional[ConstantVelocityExecutor]:
+    def get_path_executor(self, robot_data: Dict) -> Optional[ConstantVelocityExecutor]:
         """Gets a path executor to add to a robot."""
         if "path_executor" not in robot_data:
             return ConstantVelocityExecutor()
@@ -182,7 +183,7 @@ class WorldYamlLoader:
             warnings.warn(f"Invalid path executor type specified: {path_executor_type}")
             return None
 
-    def get_grasp_generator(self, robot_data: dict) -> Optional[GraspGenerator]:
+    def get_grasp_generator(self, robot_data: Dict) -> Optional[GraspGenerator]:
         """Gets a grasp generator to add to a robot."""
         from pyrobosim.manipulation.grasping import (
             GraspGenerator,

@@ -4,14 +4,14 @@ import time
 import threading
 import numpy as np
 import warnings
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Set
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
-from ..navigation.path_planner import PathPlanner
+from ..navigation.planner_base import PathPlannerBase
 from ..manipulation.grasping import GraspGenerator
 from ..navigation.execution import ConstantVelocityExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus, TaskAction, TaskPlan
@@ -35,7 +35,7 @@ class Robot:
         max_angular_velocity: float = np.inf,
         max_linear_acceleration: float = np.inf,
         max_angular_acceleration: float = np.inf,
-        path_planner: Optional[PathPlanner] = None,
+        path_planner: Optional[PathPlannerBase] = None,
         path_executor: Optional[ConstantVelocityExecutor] = None,
         grasp_generator: Optional[GraspGenerator] = None,
         partial_observability: bool = False,
@@ -96,7 +96,7 @@ class Robot:
         self.executing_nav = False
         self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
-        self.set_path_executor(path_executor)
+        self.set_path_executor(path_executor)  # type: ignore
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -114,8 +114,8 @@ class Robot:
         self.location = None
         self.manipulated_object = None
         self.partial_observability = partial_observability
-        self.known_objects = set()
-        self.last_detected_objects = []
+        self.known_objects: Set = set()
+        self.last_detected_objects: List = []
 
     def get_pose(self) -> Pose:
         """
@@ -135,7 +135,7 @@ class Robot:
         """
         self.dynamics.pose = pose
 
-    def set_path_planner(self, path_planner: PathPlanner) -> None:
+    def set_path_planner(self, path_planner: Optional[PathPlannerBase]) -> None:
         """
         Sets a path planner for navigation.
 
@@ -145,7 +145,7 @@ class Robot:
         """
         self.path_planner = path_planner
 
-    def set_path_executor(self, path_executor):
+    def set_path_executor(self, path_executor: ConstantVelocityExecutor):
         """
         Sets a path executor for navigation.
 
@@ -156,7 +156,7 @@ class Robot:
         self.path_executor = path_executor
         if path_executor is None:
             return
-        path_executor.robot = self
+        path_executor.robot = self  # type: ignore
 
     def is_moving(self) -> bool:
         """
@@ -211,7 +211,7 @@ class Robot:
             self.location, ObjectSpawn
         )
 
-    def _attach_object(self, obj):
+    def _attach_object(self, obj: Object) -> None:
         """
         Helper function to attach an object in the world to the robot.
         Be careful calling this function directly as it does not do any validation.
@@ -220,12 +220,14 @@ class Robot:
         :param obj: Object to manipulate
         :type obj: :class:`pyrobosim.core.objects.Object`
         """
-        self.manipulated_object = obj
-        obj.parent.children.remove(obj)
-        obj.parent = self
+        self.manipulated_object = obj  # type: ignore
+        obj.parent.children.remove(obj)  # type: ignore
+        obj.parent = self  # type: ignore
         obj.set_pose(self.get_pose())
 
-    def plan_path(self, start=None, goal=None):
+    def plan_path(
+        self, start: Optional[Pose] = None, goal: Optional[Pose] = None
+    ) -> Optional[Path]:
         """
         Plans a path to a goal position.
 
@@ -266,11 +268,11 @@ class Robot:
 
     def follow_path(
         self,
-        path,
-        realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
-    ):
+        path: Path,
+        realtime_factor: float = 1.0,
+        use_thread: bool = True,
+        blocking: bool = False,
+    ) -> ExecutionResult:
         """
         Follows a specified path using the attached path executor.
 
@@ -345,13 +347,13 @@ class Robot:
 
     def navigate(
         self,
-        start=None,
-        goal=None,
-        path=None,
-        realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
-    ):
+        start: Optional[Pose] = None,
+        goal: Optional[Pose] = None,
+        path: Optional[Path] = None,
+        realtime_factor: float = 1.0,
+        use_thread: bool = True,
+        blocking: bool = False,
+    ) -> ExecutionResult:
         """
         Executes a navigation task, which combines path planning and following.
 
@@ -392,8 +394,8 @@ class Robot:
         )
 
     def pick_object(
-        self, obj_query: Union[str, Object], grasp_pose: Optional[Pose] = None
-    ) -> bool:
+        self, obj_query: str, grasp_pose: Optional[Pose] = None
+    ) -> ExecutionResult:
         """
         Picks up an object in the world given an object and/or location query.
 
@@ -420,10 +422,10 @@ class Robot:
         if isinstance(obj_query, Object):
             obj = obj_query
         else:
-            obj = self.world.get_object_by_name(obj_query)
+            obj = self.world.get_object_by_name(obj_query)  # type: ignore
             if not obj and isinstance(obj_query, str):
                 obj = resolve_to_object(
-                    self.world,
+                    self.world,  # type: ignore
                     category=obj_query,
                     location=loc,
                     resolution_strategy="nearest",
@@ -438,13 +440,13 @@ class Robot:
 
         # Validate the robot location
         if obj.parent != loc:
-            message = f"{obj.name} is at {obj.parent.name} and robot is at {loc.name}. Cannot pick."
+            message = f"{obj.name} is at {obj.parent.name} and robot is at {loc.name}. Cannot pick."  # type: ignore
             warnings.warn(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
-        if not loc.is_open:
-            message = f"{loc.parent.name} is not open. Cannot pick object."
+        if not loc.is_open:  # type: ignore
+            message = f"{loc.parent.name} is not open. Cannot pick object."  # type: ignore
             warnings.warn(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
@@ -458,8 +460,8 @@ class Robot:
                 grasp_properties = self.grasp_generator.properties
             else:
                 grasp_properties = None
-            self.last_grasp_selection = Grasp(
-                properties=grasp_properties,
+            self.last_grasp_selection = Grasp(  # type:ignore
+                properties=grasp_properties,  # type: ignore
                 origin_wrt_object=Pose(),
                 origin_wrt_world=grasp_pose,
             )
@@ -482,7 +484,7 @@ class Robot:
                 )
             else:
                 # TODO: For now, just pick a random grasp.
-                self.last_grasp_selection = np.random.choice(grasps)
+                self.last_grasp_selection = np.random.choice(grasps)  # type: ignore
         if self.last_grasp_selection is not None:
             print(f"Selected {self.last_grasp_selection}")
 
@@ -490,7 +492,7 @@ class Robot:
         self._attach_object(obj)
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def place_object(self, pose: Optional[Pose] = None) -> bool:
+    def place_object(self, pose: Optional[Pose] = None) -> ExecutionResult:
         """
         Places an object in a target location and (optionally) pose.
 
@@ -503,7 +505,7 @@ class Robot:
         if self.manipulated_object is None:
             message = "No manipulated object. Cannot place."
             warnings.warn(message)
-            return ExecutionResult(
+            return ExecutionResult(  # type: ignore
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
@@ -571,7 +573,7 @@ class Robot:
             self.manipulated_object = None
             return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def detect_objects(self, target_object: Optional[str] = None) -> bool:
+    def detect_objects(self, target_object: Optional[str] = None) -> ExecutionResult:
         """
         Detects all objects at the robot's current location.
 
@@ -590,26 +592,26 @@ class Robot:
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
-        if not self.location.is_open:
-            message = f"{self.location.parent.name} is not open. Cannot detect objects."
+        if not self.location.is_open:  # type: ignore
+            message = f"{self.location.parent.name} is not open. Cannot detect objects."  # type: ignore
             warnings.warn(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         # Add all the objects at the current robot's location.
-        for obj in self.location.children:
+        for obj in self.location.children:  # type: ignore
             self.known_objects.add(obj)
 
         # If a target object was specified, look for a matching instance.
         # We should only return SUCCESS if one such instance was found.
         if target_object is None:
-            self.last_detected_objects = self.location.children
+            self.last_detected_objects = self.location.children  # type: ignore
             return ExecutionResult(status=ExecutionStatus.SUCCESS)
         else:
             self.last_detected_objects = [
                 obj
-                for obj in self.location.children
+                for obj in self.location.children  # type: ignore
                 if obj.name == target_object or obj.category == target_object
             ]
             if len(self.last_detected_objects) > 0:
@@ -620,7 +622,7 @@ class Robot:
                     message=f"Failed to detect any objects matching the query '{target_object}'.",
                 )
 
-    def open_location(self) -> bool:
+    def open_location(self) -> ExecutionResult:
         """
         Opens the robot's current location, if available.
 
@@ -656,7 +658,7 @@ class Robot:
         # This should not happen
         return ExecutionResult(status=ExecutionResult.UNKNOWN)
 
-    def close_location(self) -> bool:
+    def close_location(self) -> ExecutionResult:
         """
         Closes the robot's current location, if available.
 
@@ -692,7 +694,9 @@ class Robot:
         # This should not happen
         return ExecutionResult(status=ExecutionResult.UNKNOWN)
 
-    def execute_action(self, action: TaskAction, blocking: bool = False) -> bool:
+    def execute_action(
+        self, action: TaskAction, blocking: bool = False
+    ) -> ExecutionResult:
         """
         Executes an action, specified as a
         :class:`pyrobosim.planning.actions.TaskAction` object.
@@ -705,9 +709,9 @@ class Robot:
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         self.executing_action = True
-        self.current_action = action
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(False)
+        self.current_action = action  # type: ignore
+        if self.world.has_gui:  # type: ignore
+            self.world.gui.set_buttons_during_action(False)  # type: ignore
 
         # Simulate action-agnostic properties such as delays or failure probabilities.
         if not action.should_succeed():
@@ -720,14 +724,14 @@ class Robot:
         elif action.type == "navigate":
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
-            if self.world.has_gui:
-                self.world.gui.canvas.navigate(self, action.target_location, path)
+            if self.world.has_gui:  # type: ignore
+                self.world.gui.canvas.navigate(self, action.target_location, path)  # type: ignore
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 result = self.last_nav_result
             else:
                 result = self.navigate(
-                    goal=action.target_location,
+                    goal=action.target_location,  # type: ignore
                     path=path,
                     realtime_factor=1.0,
                     use_thread=True,
@@ -736,34 +740,34 @@ class Robot:
             self.executing_nav = False
 
         elif action.type == "pick":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.pick_object(
+            if self.world.has_gui:  # type: ignore
+                result = self.world.gui.canvas.pick_object(  # type: ignore
                     self, action.object, action.pose
                 )
             else:
-                result = self.pick_object(action.object, action.pose)
+                result = self.pick_object(action.object, action.pose)  # type: ignore
 
         elif action.type == "place":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.place_object(self, action.pose)
+            if self.world.has_gui:  # type: ignore
+                result = self.world.gui.canvas.place_object(self, action.pose)  # type: ignore
             else:
                 result = self.place_object(action.pose)
 
         elif action.type == "detect":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.detect_objects(self, action.object)
+            if self.world.has_gui:  # type: ignore
+                result = self.world.gui.canvas.detect_objects(self, action.object)  # type: ignore
             else:
                 result = self.detect_objects(action.object)
 
         elif action.type == "open":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.open_location(self)
+            if self.world.has_gui:  # type: ignore
+                result = self.world.gui.canvas.open_location(self)  # type: ignore
             else:
                 result = self.open_location()
 
         elif action.type == "close":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.close_location(self)
+            if self.world.has_gui:  # type: ignore
+                result = self.world.gui.canvas.close_location(self)  # type: ignore
             else:
                 result = self.close_location()
 
@@ -774,8 +778,8 @@ class Robot:
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+        if self.world.has_gui:  # type: ignore
+            self.world.gui.set_buttons_during_action(True)  # type: ignore
         print(f"[{self.name}] Action completed with result: {result.status.name}")
         if blocking:
             self.current_action = None
@@ -793,7 +797,9 @@ class Robot:
             print(f"[{self.name}] Canceling path execution...")
             self.path_executor.cancel_execution = True
 
-    def execute_plan(self, plan: TaskPlan, delay: float = 0.5) -> Tuple[bool, int]:
+    def execute_plan(
+        self, plan: TaskPlan, delay: float = 0.5
+    ) -> Tuple[ExecutionResult, int]:
         """
         Executes a task plan, specified as a
         :class:`pyrobosim.planning.actions.TaskPlan` object.
@@ -814,11 +820,11 @@ class Robot:
             )
 
         self.executing_plan = True
-        self.current_plan = plan
+        self.current_plan = plan  # type: ignore
 
         print(f"[{self.name}] Executing task plan...")
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(False)
+        if self.world.has_gui:  # type: ignore
+            self.world.gui.set_buttons_during_action(False)  # type: ignore
 
         result = ExecutionResult(status=ExecutionStatus.SUCCESS)
         num_completed = 0
@@ -843,8 +849,8 @@ class Robot:
             num_completed += 1
             time.sleep(delay)  # Artificial delay between actions
 
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+        if self.world.has_gui:  # type: ignore
+            self.world.gui.set_buttons_during_action(True)  # type: ignore
 
         print(f"[{self.name}] Task plan completed with status: {result.status.name}")
         self.executing_plan = False
@@ -857,7 +863,7 @@ class Robot:
 
     def print_details(self) -> None:
         """Prints string with details."""
-        details_str = f"Robot: {self.name}, ID={self.id}"
+        details_str = f"Robot: {self.name}, ID={self.id}"  # type: ignore
         details_str += f"\n\t{self.get_pose()}"
         if self.partial_observability:
             details_str += "\n\tPartial observability enabled"

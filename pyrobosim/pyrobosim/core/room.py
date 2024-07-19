@@ -2,7 +2,7 @@
 Room representation for world modeling.
 """
 
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Any
 import matplotlib
 from shapely import intersects_xy  # type: ignore
 from shapely.geometry import Polygon  # type: ignore
@@ -55,7 +55,7 @@ class Room:
         if isinstance(footprint, list):
             self.polygon = Polygon(footprint)
         else:
-            self.polygon, _ = polygon_and_height_from_footprint(footprint)
+            self.polygon, _ = polygon_and_height_from_footprint(footprint)  # type: ignore
         if self.polygon.is_empty:
             raise Exception("Room footprint cannot be empty.")
 
@@ -105,7 +105,7 @@ class Room:
             zorder=2,
         )
 
-    def get_collision_patch(self):
+    def get_collision_patch(self) -> Any:
         """
         Returns a patch of the collision polygon for debug visualization.
 
@@ -138,7 +138,7 @@ class Room:
 
     def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
-        self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
+        self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]  # type: ignore
 
     def __repr__(self) -> str:
         """Returns printable string."""

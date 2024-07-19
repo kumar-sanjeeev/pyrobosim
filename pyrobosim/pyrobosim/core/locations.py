@@ -1,11 +1,11 @@
 """ Representations for locations and their corresponding object spawns. """
 
-from typing import Tuple, List, Union, Optional
-from shapely import intersects_xy
-from shapely.plotting import patch_from_polygon
+from typing import Tuple, List, Union, Optional, Any
+from shapely import intersects_xy  # type: ignore
+from shapely.plotting import patch_from_polygon  # type: ignore
 
 from ..utils.general import EntityMetadata, InvalidEntityCategoryException
-from ..utils.pose import Pose, rot2d
+from ..utils.pose import Pose, rot2d  # type: ignore
 from ..utils.polygon import (
     inflate_polygon,
     polygon_and_height_from_footprint,
@@ -32,18 +32,18 @@ class Location:
         :param filename: Path to location metadata YAML file.
         :type filename: str
         """
-        cls.metadata = EntityMetadata(filename)
+        cls.metadata = EntityMetadata(filename)  # type: ignore
 
     def __init__(
         self,
-        name=None,
-        category=None,
-        pose=None,
-        parent=None,
-        color=None,
-        is_open=True,
-        is_locked=False,
-    ):
+        name: Optional[str] = None,
+        category: Optional[str] = None,
+        pose: Optional[Pose] = None,
+        parent: Optional[Any] = None,
+        color: Optional[Any] = None,
+        is_open: bool = True,
+        is_locked: bool = False,
+    ) -> None:
         """
         Creates a location instance.
 
@@ -76,7 +76,7 @@ class Location:
         self.is_open = is_open
         self.is_locked = is_locked
 
-        self.metadata = Location.metadata.get(self.category)
+        self.metadata = Location.metadata.get(self.category)  # type: ignore
         if not self.metadata:
             raise InvalidEntityCategoryException(
                 f"Invalid location category: {self.category}"
@@ -116,7 +116,7 @@ class Location:
             x, y = pose.x, pose.y
         else:
             x, y = pose[0], pose[1]
-        return intersects_xy(self.polygon, x, y)
+        return intersects_xy(self.polygon, x, y)  # type: ignore
 
     def set_pose(self, pose: Pose) -> None:
         """
@@ -137,7 +137,7 @@ class Location:
             else:
                 p_off = (0, 0)
             for p in self.metadata["nav_poses"]:
-                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]), self.pose.get_yaw())
+                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]), self.pose.get_yaw())  # type: ignore
                 nav_pose = Pose(
                     x=rot_p[0] + self.pose.x,
                     y=rot_p[1] + self.pose.y,
@@ -154,7 +154,7 @@ class Location:
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.raw_polygon, self.height = polygon_and_height_from_footprint(
+        self.raw_polygon, self.height = polygon_and_height_from_footprint(  # type: ignore
             self.metadata["footprint"],
             parent_polygon=self.parent.polygon if self.parent is not None else None,
         )
@@ -169,7 +169,7 @@ class Location:
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
+        self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)  # type: ignore
 
     def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the location."""
@@ -185,7 +185,7 @@ class Location:
 
     def create_spawn_locations(self) -> None:
         """Creates the object spawn locations at this location."""
-        self.children = []
+        self.children: List = []
         if "locations" in self.metadata:
             for loc_data in self.metadata["locations"]:
                 if "name" in loc_data:
@@ -204,7 +204,7 @@ class Location:
         """Returns printable string."""
         return f"Location: {self.name}"
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Prints string with details."""
         print(f"Location: {self.name} in {self.parent}\n\t{self.pose}")
 
@@ -226,16 +226,16 @@ class ObjectSpawn:
         :type parent: Entity
         """
         self.name = name
-        self.category = parent.category
-        self.parent = parent
-        self.children = []
-        self.graph_nodes = []
+        self.category = parent.category  # type: ignore
+        self.parent = parent  # type: ignore
+        self.children: List = []
+        self.graph_nodes: List = []
 
         self.metadata = metadata
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
         else:
-            self.viz_color = self.parent.viz_color
+            self.viz_color = self.parent.viz_color  # type: ignore
 
         self.set_pose_from_parent()
 
@@ -244,18 +244,18 @@ class ObjectSpawn:
         # Get the footprint and height data
         if "footprint" not in self.metadata:
             self.metadata["footprint"] = {"type": "parent"}
-        self.polygon, self.height = polygon_and_height_from_footprint(
+        self.polygon, self.height = polygon_and_height_from_footprint(  # type: ignore
             self.metadata["footprint"],
-            pose=self.parent.pose,
+            pose=self.parent.pose,  # type: ignore
             parent_polygon=self.parent.polygon if self.parent is not None else None,
         )
         if self.height is None:
-            self.height = self.parent.height
+            self.height = self.parent.height  # type: ignore
 
         self.update_visualization_polygon()
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.pose = Pose(
-            x=self.centroid[0], y=self.centroid[1], z=0.0, q=self.parent.pose.q
+            x=self.centroid[0], y=self.centroid[1], z=0.0, q=self.parent.pose.q  # type: ignore
         )
 
         # If navigation poses were specified, add them. Else, use the parent poses.
@@ -268,18 +268,18 @@ class ObjectSpawn:
                 p_off = (0, 0)
             for p in self.metadata["nav_poses"]:
                 rot_p = rot2d(
-                    (p[0] + p_off[0], p[1] + p_off[1]), self.parent.pose.get_yaw()
+                    (p[0] + p_off[0], p[1] + p_off[1]), self.parent.pose.get_yaw()  # type: ignore
                 )
                 nav_pose = Pose(
-                    x=rot_p[0] + self.parent.pose.x,
-                    y=rot_p[1] + self.parent.pose.y,
-                    z=self.parent.pose.z,
-                    yaw=p[2] + self.parent.pose.get_yaw(),
+                    x=rot_p[0] + self.parent.pose.x,  # type: ignore
+                    y=rot_p[1] + self.parent.pose.y,  # type: ignore
+                    z=self.parent.pose.z,  # type: ignore
+                    yaw=p[2] + self.parent.pose.get_yaw(),  # type: ignore
                 )
-                if self.parent.parent.is_collision_free(nav_pose):
+                if self.parent.parent.is_collision_free(nav_pose):  # type: ignore
                     self.nav_poses.append(nav_pose)
         else:
-            self.nav_poses = self.parent.nav_poses
+            self.nav_poses = self.parent.nav_poses  # type: ignore
 
     def get_room_name(self) -> str:
         """
@@ -288,7 +288,7 @@ class ObjectSpawn:
         :return: Room name.
         :rtype: str
         """
-        return self.parent.get_room_name()
+        return self.parent.get_room_name()  # type: ignore
 
     def is_inside(self, pose: Union[Pose, Tuple[float, float]]) -> bool:
         """
@@ -310,12 +310,12 @@ class ObjectSpawn:
         """Property to check that an object spawn is open through its parent location."""
         return self.parent.is_open
 
-    def update_visualization_polygon(self):
+    def update_visualization_polygon(self) -> None:
         """Updates the visualization polygon for the object spawn."""
         self.viz_patch = patch_from_polygon(
             self.polygon,
             facecolor=None,
-            edgecolor=self.parent.viz_color,
+            edgecolor=self.parent.viz_color,  # type: ignore
             linewidth=1,
             fill=None,
             ls="--",
@@ -324,7 +324,7 @@ class ObjectSpawn:
 
     def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""
-        self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
+        self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]  # type: ignore
 
     def __repr__(self) -> str:
         """Returns printable string."""
@@ -332,4 +332,4 @@ class ObjectSpawn:
 
     def print_details(self) -> None:
         """Prints string with details."""
-        print(f"Object spawn: {self.name} in {self.parent.name}\n\t{self.pose}")
+        print(f"Object spawn: {self.name} in {self.parent.name}\n\t{self.pose}")  # type: ignore

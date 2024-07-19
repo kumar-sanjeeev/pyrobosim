@@ -2,8 +2,8 @@
 
 from typing import Optional, Tuple
 import numpy as np
-from shapely.plotting import patch_from_polygon
-from scipy.spatial import ConvexHull
+from shapely.plotting import patch_from_polygon  # type: ignore
+from scipy.spatial import ConvexHull  # type: ignore
 
 from ..utils.general import EntityMetadata, InvalidEntityCategoryException
 from ..utils.pose import Pose
@@ -33,7 +33,7 @@ class Object:
         :param filename: Path to object metadata YAML file.
         :type filename: str
         """
-        cls.metadata = EntityMetadata(filename)
+        cls.metadata = EntityMetadata(filename)  # type: ignore
 
     def __init__(
         self,
@@ -70,7 +70,7 @@ class Object:
         self.viz_patch = None
         self.viz_text = None
 
-        self.metadata = Object.metadata.get(self.category)
+        self.metadata = Object.metadata.get(self.category)  # type: ignore
         if not self.metadata:
             raise InvalidEntityCategoryException(
                 f"Invalid object category: {self.category}"
@@ -81,7 +81,7 @@ class Object:
         elif "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
-        self.set_pose(pose)
+        self.set_pose(pose)  # type: ignore
         self.create_polygons()
         self.create_grasp_cuboid()
 
@@ -96,7 +96,7 @@ class Object:
         """
         self.pose = pose
         if self.pose is not None and self.parent is not None:
-            self.pose.z += self.parent.height
+            self.pose.z += self.parent.height  # type: ignore
 
     def get_room_name(self) -> str:
         """
@@ -105,7 +105,7 @@ class Object:
         :return: Room name.
         :rtype: str
         """
-        return self.parent.get_room_name()
+        return self.parent.get_room_name()  # type: ignore
 
     def create_polygons(self, inflation_radius: Optional[float] = None) -> None:
         """
@@ -116,7 +116,7 @@ class Object:
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.raw_polygon, height = polygon_and_height_from_footprint(
+        self.raw_polygon, height = polygon_and_height_from_footprint(  # type: ignore
             self.metadata["footprint"]
         )
         self.polygon = transform_polygon(self.raw_polygon, self.pose)
@@ -198,4 +198,4 @@ class Object:
 
     def print_details(self) -> None:
         """Prints string with details."""
-        print(f"Object: {self.name} in {self.parent.name}\n\t{self.pose}")
+        print(f"Object: {self.name} in {self.parent.name}\n\t{self.pose}")  # type: ignore

@@ -37,7 +37,7 @@ def get_stream_map(world: World, robot: Robot) -> Dict[str, Callable]:
         # Streams (that sample)
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
-            lambda p1, p2: primitives.sample_motion(planner, p1, p2)
+            lambda p1, p2: primitives.sample_motion(planner, p1, p2)  # type: ignore
         ),
         "s-grasp": from_gen_fn(
             lambda obj, p_obj, p_robot: primitives.sample_grasp_pose(

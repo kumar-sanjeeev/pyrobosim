@@ -20,6 +20,7 @@ from ..core.robot import Robot
 from ..core.objects import Object
 from ..utils.motion import Path
 from ..utils.pose import Pose
+from ..planning.actions import ExecutionResult
 
 if TYPE_CHECKING:
     from .main import PyRoboSimMainWindow
@@ -64,7 +65,7 @@ class NavRunner(QRunnable):
 
         # Find a path, or use an existing one, and start the navigation thread.
         robot.navigate(  # type: ignore
-            goal=self.goal,
+            goal=self.goal,  # type: ignore
             path=self.path,
             use_thread=True,
             blocking=True,
@@ -494,7 +495,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def pick_object(
         self, robot: Robot, obj_name: str, grasp_pose: Optional[Pose] = None
-    ) -> bool:
+    ) -> ExecutionResult:
         """
         Picks an object with a specified robot.
 
@@ -504,8 +505,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type obj_name: str
         :param grasp_pose: A pose describing how to manipulate the object.
         :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if picking succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
             return False
@@ -543,7 +544,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.draw_signal.emit()
         return success
 
-    def detect_objects(self, robot: Robot, query: Optional[str] = None) -> bool:
+    def detect_objects(
+        self, robot: Robot, query: Optional[str] = None
+    ) -> ExecutionResult:
         """
         Detects objects at the robot's current location.
 
@@ -551,8 +554,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param query: Query for object detection.
         :type query: str, optional
-        :return: True if object detection succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
             return False
@@ -562,7 +565,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.draw_signal.emit()
         return success
 
-    def open_location(self, robot: Optional[Robot]) -> bool:
+    def open_location(self, robot: Optional[Robot]):
         """
         Opens the robot's current location, if available.
 
@@ -576,7 +579,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         return robot.open_location()
 
-    def close_location(self, robot: Optional[Robot]) -> bool:
+    def close_location(self, robot: Optional[Robot]):
         """
         Closes the robot's current location, if available.
 

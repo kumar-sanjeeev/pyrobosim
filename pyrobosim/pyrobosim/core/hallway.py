@@ -78,8 +78,8 @@ class Hallway:
         self.wall_width = wall_width
         self.offset = offset
         self.viz_color = color
-        self.graph_nodes = []
-        self.nav_poses = []
+        self.graph_nodes: List = []
+        self.nav_poses: List = []
         self.is_open = is_open
         self.is_locked = is_locked
 
@@ -231,34 +231,34 @@ class Hallway:
 
         if isinstance(intersect_line, LineString):
             self.graph_nodes = [
-                Node(Pose(x=p[0], y=p[1]), parent=self) for p in intersect_line.coords
+                Node(Pose(x=p[0], y=p[1]), parent=self) for p in intersect_line.coords  # type: ignore
             ]
         elif isinstance(intersect_line, MultiLineString):
             self.graph_nodes = []
             for line in intersect_line.geoms:
                 self.graph_nodes.extend(
-                    [Node(Pose(x=p[0], y=p[1]), parent=self) for p in line.coords]
+                    [Node(Pose(x=p[0], y=p[1]), parent=self) for p in line.coords]  # type: ignore
                 )
 
         # Modify the yaw angles for the endpoint poses at the doors.
         door_pose_start_yaw = get_angle(
-            (self.graph_nodes[0].pose.x, self.graph_nodes[0].pose.y),
-            (self.graph_nodes[1].pose.x, self.graph_nodes[1].pose.y),
+            (self.graph_nodes[0].pose.x, self.graph_nodes[0].pose.y),  # type: ignore
+            (self.graph_nodes[1].pose.x, self.graph_nodes[1].pose.y),  # type: ignore
         )
         self.graph_nodes[0].pose.set_euler_angles(yaw=door_pose_start_yaw)
         door_pose_end_yaw = get_angle(
-            (self.graph_nodes[-1].pose.x, self.graph_nodes[-1].pose.y),
-            (self.graph_nodes[-2].pose.x, self.graph_nodes[-2].pose.y),
+            (self.graph_nodes[-1].pose.x, self.graph_nodes[-1].pose.y),  # type: ignore
+            (self.graph_nodes[-2].pose.x, self.graph_nodes[-2].pose.y),  # type: ignore
         )
         self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
 
         self.nav_poses = [self.graph_nodes[0].pose, self.graph_nodes[-1].pose]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Hallway: {self.name}"
 
-    def print_details(self):
+    def print_details(self) -> None:
         """Prints string with details."""
         open_str = "open" if self.is_open else "closed"
         locked_str = "locked" if self.is_locked else "unlocked"
